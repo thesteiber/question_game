@@ -130,7 +130,7 @@ def render_room_gate() -> None:
                 progress = f"{room['remaining']} of {room['total']} left"
             else:
                 progress = "setup"
-            cols = st.columns([3, 1])
+            cols = st.columns([3, 1, 1])
             with cols[0]:
                 st.markdown(
                     f'<div class="qg-room-card"><strong>{html.escape(name)}</strong><br>'
@@ -141,6 +141,17 @@ def render_room_gate() -> None:
             with cols[1]:
                 if st.button("Join", key=f"join_{name}"):
                     enter_room(name)
+            with cols[2]:
+                confirm_key = f"confirm_del_{name}"
+                if st.session_state.get(confirm_key):
+                    if st.button("Confirm", key=f"del_yes_{name}", type="primary"):
+                        db.delete_room(name)
+                        st.session_state.pop(confirm_key, None)
+                        st.rerun()
+                else:
+                    if st.button("Delete", key=f"del_{name}"):
+                        st.session_state[confirm_key] = True
+                        st.rerun()
 
     favorites = db.list_favorites()
     with st.expander(f"Favorites ({len(favorites)})"):
@@ -306,6 +317,14 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
         st.info("No questions left.")
 
     with st.expander("Game options"):
+        st.caption("Players: " + (", ".join(room.get("players") or []) or "none"))
+        with st.form("add_player_form", clear_on_submit=True):
+            new_player = st.text_input("Add a player", placeholder="Name")
+            if st.form_submit_button("Add player"):
+                if db.add_player(room_name, new_player):
+                    st.rerun()
+                else:
+                    st.warning("Enter a new, non-duplicate name.")
         if st.button("New question bank"):
             db.clear_questions(room_name)
             st.rerun()

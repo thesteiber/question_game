@@ -103,6 +103,25 @@ class GameDB:
                 return None
             return _room_from_row(row)
 
+    def delete_room(self, room_name: str) -> None:
+        key = _normalize_room(room_name)
+        with self._connect() as conn:
+            conn.execute("DELETE FROM questions WHERE room_name = ?", (key,))
+            conn.execute("DELETE FROM rooms WHERE room_name = ?", (key,))
+
+    def add_player(self, room_name: str, player_name: str) -> bool:
+        """Append a player to an existing room. Returns False if empty/duplicate."""
+        name = " ".join(player_name.strip().split())
+        if not name:
+            return False
+        room = self.ensure_room(room_name)
+        players = list(room["players"])
+        if any(name.lower() == p.lower() for p in players):
+            return False
+        players.append(name)
+        self.save_room(room_name, players=players)
+        return True
+
     def ensure_room(self, room_name: str) -> dict[str, Any]:
         existing = self.get_room(room_name)
         if existing:
