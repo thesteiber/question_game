@@ -57,8 +57,40 @@ class GameDB:
                     PRIMARY KEY (room_name, number),
                     FOREIGN KEY (room_name) REFERENCES rooms(room_name) ON DELETE CASCADE
                 );
+
+                CREATE TABLE IF NOT EXISTS favorites (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    question_text TEXT NOT NULL UNIQUE,
+                    room_name TEXT,
+                    source_number INTEGER,
+                    created_at TEXT NOT NULL
+                );
                 """
             )
+
+    def list_rooms(self) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT room_name, players, settings, updated_at
+                FROM rooms
+                ORDER BY updated_at DESC
+                """
+            ).fetchall()
+        rooms = []
+        for row in rows:
+            room = _room_from_row(row)
+            key = room["room_name"]
+            remaining = len(self.remaining_questions(key))
+            total = self.question_count(key)
+            rooms.append(
+                {
+                    **room,
+                    "remaining": remaining,
+                    "total": total,
+                }
+            )
+        return rooms
 
     def get_room(self, room_name: str) -> dict[str, Any] | None:
         key = _normalize_room(room_name)
@@ -269,6 +301,86 @@ class GameDB:
         if not self.remaining_questions(key):
             settings["phase"] = "done"
         self.save_room(key, settings=settings)
+
+    def skip_question(self, room_name: str, number: int) -> None:
+        """Remove the current question without advancing the player turn."""
+        key = _normalize_room(room_name)
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE questions
+                SET answered = 1, answered_by = ?
+                WHERE room_name = ? AND number = ?
+                """,
+                ("skipped", key, number),
+            )
+        room = self.ensure_room(key)
+        settings = dict(room["settings"])
+        settings["current_question_number"] = None
+        if not self.remaining_questions(key):
+            settings["phase"] = "done"
+        self.save_room(key, settings=settings)
+
+    def add_favorite(
+        self,
+        question_text: str,
+        *,
+        room_name: str | None = None,
+        source_number: int | None = None,
+    ) -> bool:
+        """Store a question permanently. Returns False if already favorited."""
+        text = " ".join(question_text.strip().split())
+        if not text:
+            return False
+        room_key = _normalize_room(room_name) if room_name else None
+        with self._connect() as conn:
+            existing = conn.execute(
+                "SELECT id FROM favorites WHERE question_text = ?",
+                (text,),
+            ).fetchone()
+            if existing:
+                return False
+            conn.execute(
+                """
+                INSERT INTO favorites (question_text, room_name, source_number, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (text, room_key, source_number, _utc_now()),
+            )
+        return True
+
+    def remove_favorite(self, favorite_id: int) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM favorites WHERE id = ?", (favorite_id,))
+
+    def is_favorited(self, question_text: str) -> bool:
+        text = " ".join(question_text.strip().split())
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT id FROM favorites WHERE question_text = ?",
+                (text,),
+            ).fetchone()
+        return row is not None
+
+    def list_favorites(self) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, question_text, room_name, source_number, created_at
+                FROM favorites
+                ORDER BY created_at DESC
+                """
+            ).fetchall()
+        return [
+            {
+                "id": row["id"],
+                "question_text": row["question_text"],
+                "room_name": row["room_name"],
+                "source_number": row["source_number"],
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]
 
     def reset_progress(self, room_name: str) -> dict[str, Any]:
         key = _normalize_room(room_name)

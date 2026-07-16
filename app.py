@@ -48,6 +48,12 @@ st.markdown(
         margin-bottom: 1.25rem;
     }
     .qg-progress { color: #5c564c; margin: 0.5rem 0 1rem 0; }
+    .qg-room-card {
+        background: #ebe4d8;
+        border-radius: 12px;
+        padding: 0.75rem 0.9rem;
+        margin-bottom: 0.5rem;
+    }
     div.stButton > button {
         width: 100%;
         min-height: 3rem;
@@ -88,7 +94,15 @@ def current_player(room: dict) -> str | None:
     return players[idx]
 
 
+def enter_room(room_name: str) -> None:
+    db = get_db()
+    db.ensure_room(room_name)
+    st.session_state.room_name = room_name.strip()
+    st.rerun()
+
+
 def render_room_gate() -> None:
+    db = get_db()
     st.title("Question Game")
     st.markdown(
         '<p class="qg-meta">Enter a shared room name to play. Same name = same game '
@@ -101,11 +115,50 @@ def render_room_gate() -> None:
     if submitted:
         if not room.strip():
             st.error("Enter a room name.")
+        else:
+            enter_room(room)
+
+    rooms = db.list_rooms()
+    st.subheader("Existing rooms")
+    if not rooms:
+        st.caption("No rooms yet — create one above.")
+    else:
+        for room in rooms:
+            name = room["room_name"]
+            players = ", ".join(room["players"]) if room["players"] else "no players yet"
+            if room["total"]:
+                progress = f"{room['remaining']} of {room['total']} left"
+            else:
+                progress = "setup"
+            cols = st.columns([3, 1])
+            with cols[0]:
+                st.markdown(
+                    f'<div class="qg-room-card"><strong>{html.escape(name)}</strong><br>'
+                    f'<span style="color:#5c564c;font-size:0.9rem">{html.escape(players)} · '
+                    f"{html.escape(progress)}</span></div>",
+                    unsafe_allow_html=True,
+                )
+            with cols[1]:
+                if st.button("Join", key=f"join_{name}"):
+                    enter_room(name)
+
+    favorites = db.list_favorites()
+    with st.expander(f"Favorites ({len(favorites)})"):
+        if not favorites:
+            st.caption("Heart a question during play to save it here.")
             return
-        db = get_db()
-        db.ensure_room(room)
-        st.session_state.room_name = room.strip()
-        st.rerun()
+        for fav in favorites:
+            st.markdown(f"• {html.escape(fav['question_text'])}")
+            meta = []
+            if fav.get("room_name"):
+                meta.append(fav["room_name"])
+            if fav.get("source_number"):
+                meta.append(f"#{fav['source_number']}")
+            if meta:
+                st.caption(" · ".join(meta))
+            if st.button("Remove", key=f"unfav_{fav['id']}"):
+                db.remove_favorite(fav["id"])
+                st.rerun()
 
 
 def render_setup(db: GameDB, room_name: str, room: dict) -> None:
@@ -179,11 +232,9 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
 
 
 def render_play(db: GameDB, room_name: str, room: dict) -> None:
-    players = room.get("players") or []
     remaining = db.remaining_questions(room_name)
     answered = [q for q in db.list_questions(room_name) if q["answered"]]
     total = db.question_count(room_name)
-    player = current_player(room)
 
     st.title("Question Game")
     st.markdown(
@@ -228,13 +279,29 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
             unsafe_allow_html=True,
         )
         st.markdown(
-            f'<p class="qg-progress">{len(remaining)} remaining · next up after this turn</p>',
+            f'<p class="qg-progress">{len(remaining)} remaining</p>',
             unsafe_allow_html=True,
         )
 
-        if st.button("Next turn", type="primary"):
-            db.mark_answered(room_name, question["number"], player or "unknown")
-            st.rerun()
+        favorited = db.is_favorited(question["text"])
+        fav_label = "Favorited" if favorited else "Favorite"
+        col_next, col_skip, col_fav = st.columns(3)
+        with col_next:
+            if st.button("Next turn", type="primary"):
+                db.mark_answered(room_name, question["number"], player or "unknown")
+                st.rerun()
+        with col_skip:
+            if st.button("Skip"):
+                db.skip_question(room_name, question["number"])
+                st.rerun()
+        with col_fav:
+            if st.button(fav_label, disabled=favorited):
+                db.add_favorite(
+                    question["text"],
+                    room_name=room_name,
+                    source_number=question["number"],
+                )
+                st.rerun()
     else:
         st.info("No questions left.")
 
@@ -253,12 +320,17 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
 
 
 def _answered_expander(answered: list[dict]) -> None:
-    with st.expander(f"Answered ({len(answered)})"):
+    with st.expander(f"Answered / skipped ({len(answered)})"):
         if not answered:
             st.caption("Nothing crossed off yet.")
             return
         for q in answered:
-            who = f" — {html.escape(q['answered_by'])}" if q.get("answered_by") else ""
+            if q.get("answered_by") == "skipped":
+                who = " — skipped"
+            elif q.get("answered_by"):
+                who = f" — {html.escape(q['answered_by'])}"
+            else:
+                who = ""
             st.markdown(f"~~{q['number']}. {html.escape(q['text'])}~~{who}")
 
 
