@@ -67,9 +67,9 @@ st.markdown(
 
 
 def get_db() -> GameDB:
-    if "db" not in st.session_state:
-        st.session_state.db = GameDB()
-    return st.session_state.db
+    # Always construct fresh so redeploys pick up new GameDB methods
+    # (session_state would otherwise keep a stale class instance).
+    return GameDB()
 
 
 def get_api_key() -> str | None:
