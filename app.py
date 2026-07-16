@@ -105,8 +105,10 @@ def render_room_gate() -> None:
     db = get_db()
     st.title("Question Game")
     st.markdown(
-        '<p class="qg-meta">Enter a shared room name to play. Same name = same game '
-        "(handy on one phone or two).</p>",
+        '<p class="qg-meta" style="font-size:1.1rem;margin-bottom:0.2rem">'
+        "a game by Sydney &amp; Niko</p>"
+        '<p class="qg-meta" style="font-size:0.85rem"><em>'
+        "create or join a room to play</em></p>",
         unsafe_allow_html=True,
     )
     with st.form("room_form"):
