@@ -8,62 +8,18 @@ from datetime import timedelta
 import streamlit as st
 
 from db import GameDB
+from dice import DiceResult, idle_dice_html, render_dice_roll, roll_until_valid
 from openai_questions import generate_questions
+from styles import APP_CSS
 
 st.set_page_config(
     page_title="Question Game",
-    page_icon="💬",
+    page_icon="🎲",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
 
-# Mobile-friendly CSS
-st.markdown(
-    """
-    <style>
-    .block-container { padding-top: 1.25rem; padding-bottom: 2rem; max-width: 40rem; }
-    h1 { font-size: 1.9rem !important; letter-spacing: -0.02em; margin-bottom: 0.25rem !important; }
-    .qg-meta { color: #5c564c; font-size: 0.95rem; margin-bottom: 1rem; }
-    .qg-turn {
-        background: #2c5f4f;
-        color: #f7f3ec;
-        border-radius: 14px;
-        padding: 0.9rem 1.1rem;
-        font-size: 1.15rem;
-        font-weight: 600;
-        margin: 0.75rem 0 1rem 0;
-    }
-    .qg-number {
-        font-size: 0.85rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #5c564c;
-        margin-bottom: 0.35rem;
-    }
-    .qg-question {
-        font-size: 1.45rem;
-        line-height: 1.35;
-        font-weight: 560;
-        color: #1c1a16;
-        margin-bottom: 1.25rem;
-    }
-    .qg-progress { color: #5c564c; margin: 0.5rem 0 1rem 0; }
-    .qg-room-card {
-        background: #ebe4d8;
-        border-radius: 12px;
-        padding: 0.75rem 0.9rem;
-        margin-bottom: 0.5rem;
-    }
-    div.stButton > button {
-        width: 100%;
-        min-height: 3rem;
-        font-size: 1.05rem;
-        border-radius: 12px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+st.markdown(f"<style>{APP_CSS}</style>", unsafe_allow_html=True)
 
 
 def get_db() -> GameDB:
@@ -98,19 +54,40 @@ def enter_room(room_name: str) -> None:
     db = get_db()
     db.ensure_room(room_name)
     st.session_state.room_name = room_name.strip()
+    st.session_state.pop("just_rolled", None)
     st.rerun()
+
+
+def progress_bar(remaining: int, total: int) -> None:
+    if total <= 0:
+        return
+    done = total - remaining
+    pct = max(0, min(100, round(100 * done / total)))
+    st.markdown(
+        f"""
+        <div class="qg-progress-wrap">
+          <div class="qg-progress-bar">
+            <div class="qg-progress-fill" style="width:{pct}%"></div>
+          </div>
+          <div class="qg-progress-label">{remaining} of {total} left · {pct}% through</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def brand_header(subtitle: str | None = None) -> None:
+    st.markdown('<p class="qg-brand">Question Game</p>', unsafe_allow_html=True)
+    if subtitle:
+        st.markdown(f'<p class="qg-meta">{subtitle}</p>', unsafe_allow_html=True)
 
 
 def render_room_gate() -> None:
     db = get_db()
-    st.title("Question Game")
-    st.markdown(
-        '<p class="qg-meta" style="font-size:1.1rem;margin-bottom:0.2rem">'
-        "a game by Sydney &amp; Niko</p>"
-        '<p class="qg-meta" style="font-size:0.85rem"><em>'
-        "create or join a room to play</em></p>",
-        unsafe_allow_html=True,
-    )
+    st.markdown('<p class="qg-brand">Question Game</p>', unsafe_allow_html=True)
+    st.markdown('<p class="qg-subtitle">a game by Sydney &amp; Niko</p>', unsafe_allow_html=True)
+    st.markdown('<p class="qg-hint">create or join a room to play</p>', unsafe_allow_html=True)
+
     with st.form("room_form"):
         room = st.text_input("Room name", placeholder="sydniko")
         submitted = st.form_submit_button("Enter room", type="primary")
@@ -121,7 +98,7 @@ def render_room_gate() -> None:
             enter_room(room)
 
     rooms = db.list_rooms()
-    st.subheader("Existing rooms")
+    st.markdown("##### Existing rooms")
     if not rooms:
         st.caption("No rooms yet — create one above.")
     else:
@@ -136,7 +113,7 @@ def render_room_gate() -> None:
             with cols[0]:
                 st.markdown(
                     f'<div class="qg-room-card"><strong>{html.escape(name)}</strong><br>'
-                    f'<span style="color:#5c564c;font-size:0.9rem">{html.escape(players)} · '
+                    f'<span style="color:#6b6258;font-size:0.88rem">{html.escape(players)} · '
                     f"{html.escape(progress)}</span></div>",
                     unsafe_allow_html=True,
                 )
@@ -158,7 +135,7 @@ def render_room_gate() -> None:
     favorites = db.list_favorites()
     with st.expander(f"Favorites ({len(favorites)})"):
         if not favorites:
-            st.caption("Heart a question during play to save it here.")
+            st.caption("Favorite a question during play to save it here.")
             return
         for fav in favorites:
             st.markdown(f"• {html.escape(fav['question_text'])}")
@@ -175,13 +152,14 @@ def render_room_gate() -> None:
 
 
 def render_setup(db: GameDB, room_name: str, room: dict) -> None:
-    st.title("Question Game")
+    brand_header(f'Room: <strong>{html.escape(room_name)}</strong>')
     st.markdown(
-        f'<p class="qg-meta">Room: <strong>{html.escape(room_name)}</strong></p>',
+        '<div class="qg-chip-row"><span class="qg-chip qg-chip-accent">setup</span>'
+        '<span class="qg-chip">generate 50 questions</span></div>',
         unsafe_allow_html=True,
     )
 
-    st.subheader("Players")
+    st.markdown("##### Players")
     existing = room.get("players") or ["", ""]
     while len(existing) < 2:
         existing.append("")
@@ -192,7 +170,7 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
         value=", ".join(existing[2:]) if len(existing) > 2 else "",
     )
 
-    st.subheader("Question vibe")
+    st.markdown("##### Question vibe")
     coupleyness = st.slider(
         "Coupley-ness",
         min_value=0,
@@ -225,7 +203,7 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
         settings["vibe"] = vibe
         db.save_room(room_name, players=players, settings=settings)
 
-        with st.spinner("Generating questions…"):
+        with st.spinner("Cooking up 50 questions…"):
             try:
                 questions = generate_questions(
                     api_key=api_key,
@@ -234,7 +212,7 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
                     model=get_model(),
                 )
                 db.replace_questions(room_name, questions)
-                st.success("Ready to play.")
+                st.success("Ready to roll.")
                 st.rerun()
             except Exception:
                 st.error("Could not generate questions. Check the API key / model and try again.")
@@ -244,21 +222,156 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
         st.rerun()
 
 
+def _render_roll_screen(db: GameDB, room_name: str, room: dict, remaining: list[dict]) -> None:
+    player = current_player(room)
+    if player:
+        st.markdown(
+            f'<div class="qg-turn">{html.escape(player)}\'s turn</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        f"""
+        <div class="qg-roll-prompt">
+          <h2>Roll for a question</h2>
+          <p>Two dice, digits 0–5. Together they pick a number — already-answered ones get re-rolled.</p>
+        </div>
+        {idle_dice_html()}
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if st.button("Roll the dice", type="primary"):
+        result = roll_until_valid({q["number"] for q in remaining})
+        claimed = db.claim_question_number(
+            room_name,
+            result.number,
+            dice={"tens": result.tens, "ones": result.ones, "attempts": result.attempts},
+        )
+        if claimed:
+            st.session_state["just_rolled"] = {
+                "room": room_name,
+                "tens": result.tens,
+                "ones": result.ones,
+                "attempts": result.attempts,
+                "number": result.number,
+            }
+            st.rerun()
+        else:
+            st.warning("That number got claimed — try again.")
+            st.rerun()
+
+
+def _render_question_card(
+    db: GameDB,
+    room_name: str,
+    room: dict,
+    question: dict,
+    remaining: list[dict],
+    total: int,
+) -> None:
+    player = current_player(room)
+    just = st.session_state.get("just_rolled")
+    show_anim = (
+        isinstance(just, dict)
+        and just.get("room") == room_name
+        and just.get("number") == question["number"]
+    )
+
+    if player:
+        st.markdown(
+            f'<div class="qg-turn">{html.escape(player)}\'s turn</div>',
+            unsafe_allow_html=True,
+        )
+
+    if show_anim:
+        render_dice_roll(
+            DiceResult(
+                tens=int(just["tens"]),
+                ones=int(just["ones"]),
+                number=int(just["number"]),
+                attempts=int(just.get("attempts", 1)),
+            )
+        )
+        # Clear so refreshes / second phone don't replay the roll.
+        st.session_state.pop("just_rolled", None)
+    else:
+        last = room["settings"].get("last_dice") or {}
+        tens = last.get("tens", question["number"] // 10)
+        ones = last.get("ones", question["number"] % 10)
+        st.markdown(
+            f"""
+            <div class="qg-dice-stage">
+              <div class="qg-die qg-dice-static"><span class="qg-die-face">{int(tens)}</span></div>
+              <div class="qg-die qg-dice-static"><span class="qg-die-face">{int(ones)}</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        f'<div class="qg-number">Question {question["number"]}</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f'<div class="qg-question">{html.escape(question["text"])}</div>',
+        unsafe_allow_html=True,
+    )
+    progress_bar(len(remaining), total)
+
+    favorited = db.is_favorited(question["text"])
+    fav_label = "Saved ★" if favorited else "Favorite ★"
+
+    if st.button("Next turn", type="primary"):
+        db.mark_answered(room_name, question["number"], player or "unknown")
+        st.session_state.pop("just_rolled", None)
+        st.rerun()
+
+    col_skip, col_fav = st.columns(2)
+    with col_skip:
+        if st.button("Skip"):
+            db.skip_question(room_name, question["number"])
+            st.session_state.pop("just_rolled", None)
+            st.rerun()
+    with col_fav:
+        if st.button(fav_label, disabled=favorited):
+            db.add_favorite(
+                question["text"],
+                room_name=room_name,
+                source_number=question["number"],
+            )
+            st.rerun()
+
+
 def render_play(db: GameDB, room_name: str, room: dict) -> None:
     remaining = db.remaining_questions(room_name)
     answered = [q for q in db.list_questions(room_name) if q["answered"]]
     total = db.question_count(room_name)
+    player_names = room.get("players") or []
 
-    st.title("Question Game")
-    st.markdown(
-        f'<p class="qg-meta">Room: <strong>{html.escape(room_name)}</strong> · '
-        f"{len(remaining)} of {total} left</p>",
-        unsafe_allow_html=True,
+    brand_header(f'Room: <strong>{html.escape(room_name)}</strong>')
+    chips = (
+        f'<div class="qg-chip-row">'
+        f'<span class="qg-chip qg-chip-accent">{html.escape(room_name)}</span>'
     )
+    for name in player_names[:4]:
+        chips += f'<span class="qg-chip">{html.escape(name)}</span>'
+    if len(player_names) > 4:
+        chips += f'<span class="qg-chip">+{len(player_names) - 4}</span>'
+    chips += "</div>"
+    st.markdown(chips, unsafe_allow_html=True)
 
     if not remaining and room["settings"].get("phase") == "done":
-        st.markdown('<div class="qg-turn">All questions answered</div>', unsafe_allow_html=True)
-        st.write("Nice work. Generate a new bank or reset this one.")
+        st.markdown(
+            """
+            <div class="qg-done">
+              <div class="qg-done-title">That’s a wrap</div>
+              <div class="qg-done-sub">All questions answered. Rematch or fresh bank?</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        progress_bar(0, total)
         col_a, col_b = st.columns(2)
         with col_a:
             if st.button("Reset same questions"):
@@ -271,55 +384,18 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
         _answered_expander(answered)
         return
 
-    question = db.claim_random_question(room_name)
-    room = db.get_room(room_name) or room
-    player = current_player(room)
-    remaining = db.remaining_questions(room_name)
+    question = db.get_active_question(room_name)
 
-    if player:
-        st.markdown(
-            f'<div class="qg-turn">{html.escape(player)}\'s turn</div>',
-            unsafe_allow_html=True,
-        )
-
-    if question:
-        st.markdown(
-            f'<div class="qg-number">Question {question["number"]}</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f'<div class="qg-question">{html.escape(question["text"])}</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f'<p class="qg-progress">{len(remaining)} remaining</p>',
-            unsafe_allow_html=True,
-        )
-
-        favorited = db.is_favorited(question["text"])
-        fav_label = "Favorited" if favorited else "Favorite"
-        col_next, col_skip, col_fav = st.columns(3)
-        with col_next:
-            if st.button("Next turn", type="primary"):
-                db.mark_answered(room_name, question["number"], player or "unknown")
-                st.rerun()
-        with col_skip:
-            if st.button("Skip"):
-                db.skip_question(room_name, question["number"])
-                st.rerun()
-        with col_fav:
-            if st.button(fav_label, disabled=favorited):
-                db.add_favorite(
-                    question["text"],
-                    room_name=room_name,
-                    source_number=question["number"],
-                )
-                st.rerun()
+    if question is None:
+        if not remaining:
+            st.info("No questions left.")
+        else:
+            _render_roll_screen(db, room_name, room, remaining)
     else:
-        st.info("No questions left.")
+        _render_question_card(db, room_name, room, question, remaining, total)
 
     with st.expander("Game options"):
-        st.caption("Players: " + (", ".join(room.get("players") or []) or "none"))
+        st.caption("Players: " + (", ".join(player_names) or "none"))
         with st.form("add_player_form", clear_on_submit=True):
             new_player = st.text_input("Add a player", placeholder="Name")
             if st.form_submit_button("Add player"):
@@ -329,12 +405,15 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
                     st.warning("Enter a new, non-duplicate name.")
         if st.button("New question bank"):
             db.clear_questions(room_name)
+            st.session_state.pop("just_rolled", None)
             st.rerun()
         if st.button("Reset progress (reuse questions)"):
             db.reset_progress(room_name)
+            st.session_state.pop("just_rolled", None)
             st.rerun()
         if st.button("Leave room"):
             st.session_state.pop("room_name", None)
+            st.session_state.pop("just_rolled", None)
             st.rerun()
 
     _answered_expander(answered)
@@ -371,7 +450,7 @@ def main() -> None:
         render_setup(db, room_name, room)
         return
 
-    # Auto-refresh so a second phone picks up Next turn without manual reload.
+    # Auto-refresh so a second phone picks up rolls / next turn.
     @st.fragment(run_every=timedelta(seconds=2))
     def play_fragment() -> None:
         latest = db.get_room(room_name)

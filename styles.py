@@ -1,0 +1,331 @@
+"""Shared CSS for Question Game — mobile-first, playful."""
+
+APP_CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@500;600;700;800&display=swap');
+
+html, body, [class*="css"] {
+  font-family: 'Nunito', sans-serif !important;
+}
+
+.stApp {
+  background:
+    radial-gradient(120% 80% at 10% -10%, #ffe8d6 0%, transparent 55%),
+    radial-gradient(90% 60% at 100% 0%, #d9f2ea 0%, transparent 50%),
+    linear-gradient(180deg, #fff8f1 0%, #f3ebe1 100%);
+}
+
+.block-container {
+  padding-top: 1rem !important;
+  padding-bottom: 3.5rem !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  max-width: 28rem;
+}
+
+/* Hide Streamlit chrome for a game-like feel */
+#MainMenu, header, footer { visibility: hidden; }
+header[data-testid="stHeader"] { display: none; }
+div[data-testid="stToolbar"] { display: none; }
+div[data-testid="stDecoration"] { display: none; }
+section[data-testid="stSidebar"] { display: none; }
+
+h1, .qg-brand {
+  font-family: 'Fraunces', Georgia, serif !important;
+  font-size: 2.15rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em;
+  color: #1a2e2a !important;
+  margin-bottom: 0.15rem !important;
+  line-height: 1.15 !important;
+}
+
+.qg-subtitle {
+  color: #c45c26;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.15rem 0;
+}
+
+.qg-hint {
+  color: #6b6258;
+  font-size: 0.88rem;
+  font-style: italic;
+  margin: 0 0 1.25rem 0;
+}
+
+.qg-meta {
+  color: #6b6258;
+  font-size: 0.92rem;
+  margin-bottom: 0.85rem;
+}
+
+.qg-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.4rem 0 0.9rem 0;
+}
+
+.qg-chip {
+  background: rgba(26, 46, 42, 0.08);
+  color: #1a2e2a;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.qg-chip-accent {
+  background: #1a2e2a;
+  color: #fff8f1;
+}
+
+.qg-turn {
+  background: linear-gradient(135deg, #1a2e2a 0%, #2f6b5c 100%);
+  color: #fff8f1;
+  border-radius: 18px;
+  padding: 0.95rem 1.1rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0.5rem 0 1rem 0;
+  box-shadow: 0 10px 24px rgba(26, 46, 42, 0.18);
+  text-align: center;
+}
+
+.qg-number {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c45c26;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+  text-align: center;
+}
+
+.qg-question {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.55rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: #1a2e2a;
+  margin: 0 0 1rem 0;
+  text-align: center;
+  padding: 1rem 0.85rem;
+  background: rgba(255,255,255,0.72);
+  border-radius: 18px;
+  border: 1px solid rgba(26, 46, 42, 0.08);
+  animation: qg-pop 0.45s ease-out;
+}
+
+.qg-progress-wrap {
+  margin: 0.2rem 0 1rem 0;
+}
+
+.qg-progress-bar {
+  height: 10px;
+  background: rgba(26, 46, 42, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.qg-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c45c26, #e8a05a);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.qg-progress-label {
+  color: #6b6258;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 0.35rem;
+  text-align: center;
+}
+
+.qg-room-card {
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(26, 46, 42, 0.08);
+  border-radius: 16px;
+  padding: 0.85rem 0.95rem;
+  margin-bottom: 0.35rem;
+  box-shadow: 0 4px 14px rgba(26, 46, 42, 0.05);
+}
+
+.qg-done {
+  text-align: center;
+  padding: 1.25rem 0.75rem 0.5rem;
+}
+
+.qg-done-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a2e2a;
+  margin-bottom: 0.35rem;
+}
+
+.qg-done-sub {
+  color: #6b6258;
+  margin-bottom: 1rem;
+}
+
+/* Dice */
+.qg-dice-stage {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0 0.6rem 0;
+  min-height: 5.5rem;
+  align-items: center;
+}
+
+.qg-die {
+  width: 4.6rem;
+  height: 4.6rem;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #fffdf9, #f0e4d6);
+  border: 2px solid #1a2e2a;
+  box-shadow:
+    0 8px 0 #1a2e2a,
+    0 14px 22px rgba(26, 46, 42, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.qg-die-face {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 2.35rem;
+  font-weight: 700;
+  color: #1a2e2a;
+  line-height: 1;
+}
+
+.qg-dice-roll {
+  animation: qg-tumble 1.35s cubic-bezier(.2,.8,.2,1) both;
+  animation-delay: var(--delay, 0s);
+}
+
+.qg-dice-static .qg-die-face {
+  animation: none;
+}
+
+.qg-dice-result {
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1a2e2a;
+  margin: 0.25rem 0 0.15rem 0;
+  animation: qg-pop 0.4s ease-out 1.2s both;
+}
+
+.qg-dice-flavor {
+  text-align: center;
+  color: #6b6258;
+  font-size: 0.82rem;
+  font-style: italic;
+  margin: 0 0 0.75rem 0;
+  animation: qg-pop 0.4s ease-out 1.35s both;
+}
+
+.qg-roll-prompt {
+  text-align: center;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.qg-roll-prompt h2 {
+  font-family: 'Fraunces', Georgia, serif !important;
+  font-size: 1.45rem !important;
+  color: #1a2e2a !important;
+  margin: 0.4rem 0 0.35rem !important;
+}
+
+.qg-roll-prompt p {
+  color: #6b6258;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+}
+
+.qg-idle-dice {
+  display: flex;
+  justify-content: center;
+  gap: 0.85rem;
+  margin: 0.75rem 0 1rem 0;
+  opacity: 0.55;
+}
+
+.qg-idle-dice .qg-die {
+  width: 3.4rem;
+  height: 3.4rem;
+  box-shadow: 0 5px 0 #1a2e2a;
+}
+
+.qg-idle-dice .qg-die-face {
+  font-size: 1.6rem;
+  color: #6b6258;
+}
+
+@keyframes qg-tumble {
+  0%   { transform: translateY(-28px) rotate(-18deg) scale(0.85); }
+  18%  { transform: translateY(4px) rotate(12deg) scale(1.05); }
+  32%  { transform: translateY(-10px) rotate(-10deg); }
+  48%  { transform: translateY(2px) rotate(8deg); }
+  65%  { transform: translateY(-4px) rotate(-4deg); }
+  80%  { transform: translateY(0) rotate(2deg); }
+  100% { transform: translateY(0) rotate(0) scale(1); }
+}
+
+@keyframes qg-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* During tumble, rapidly cycle face numbers for drama */
+.qg-dice-roll .qg-die-face {
+  animation: qg-faces 1.15s steps(1) both;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes qg-faces {
+  0%   { content: none; }
+  0%, 12%  { opacity: 1; }
+}
+
+/* Buttons — big phone-friendly taps */
+div.stButton > button {
+  width: 100%;
+  min-height: 3.15rem;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  border-radius: 14px !important;
+  border: none !important;
+}
+
+div.stButton > button[kind="primary"],
+div.stButton > button[data-testid="baseButton-primary"] {
+  background: linear-gradient(135deg, #c45c26, #d9783a) !important;
+  color: white !important;
+  box-shadow: 0 6px 0 #8f3d12 !important;
+}
+
+div.stButton > button:active {
+  transform: translateY(2px);
+}
+
+/* Forms / inputs */
+.stTextInput input, .stTextArea textarea {
+  border-radius: 12px !important;
+  min-height: 2.85rem;
+}
+
+.stSlider { padding-top: 0.25rem; padding-bottom: 0.5rem; }
+
+/* Expanders */
+details {
+  background: rgba(255,255,255,0.55) !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(26, 46, 42, 0.08) !important;
+}
+"""

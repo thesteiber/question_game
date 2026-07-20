@@ -287,6 +287,7 @@ class GameDB:
             chosen = random.choice(remaining)
             settings["current_question_number"] = chosen["number"]
             settings["phase"] = "play"
+            settings.pop("last_dice", None)
             conn.execute(
                 "UPDATE rooms SET settings = ?, updated_at = ? WHERE room_name = ?",
                 (json.dumps(settings), _utc_now(), key),
@@ -296,6 +297,81 @@ class GameDB:
                 "text": chosen["text"],
                 "answered": bool(chosen["answered"]),
                 "answered_by": chosen["answered_by"],
+            }
+
+    def get_active_question(self, room_name: str) -> dict[str, Any] | None:
+        """Return the currently claimed unanswered question, if any."""
+        room = self.get_room(room_name)
+        if not room:
+            return None
+        current = room["settings"].get("current_question_number")
+        if current is None:
+            return None
+        q = self.get_question(room_name, int(current))
+        if q and not q["answered"]:
+            return q
+        return None
+
+    def claim_question_number(
+        self,
+        room_name: str,
+        number: int,
+        *,
+        dice: dict[str, int] | None = None,
+    ) -> dict[str, Any] | None:
+        """Claim a specific remaining question (used after a dice roll)."""
+        key = _normalize_room(room_name)
+        with self._connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT settings FROM rooms WHERE room_name = ?",
+                (key,),
+            ).fetchone()
+            if not row:
+                return None
+            settings = json.loads(row["settings"])
+            current = settings.get("current_question_number")
+            if current is not None:
+                qrow = conn.execute(
+                    """
+                    SELECT number, text, answered, answered_by
+                    FROM questions
+                    WHERE room_name = ? AND number = ? AND answered = 0
+                    """,
+                    (key, int(current)),
+                ).fetchone()
+                if qrow:
+                    return {
+                        "number": qrow["number"],
+                        "text": qrow["text"],
+                        "answered": bool(qrow["answered"]),
+                        "answered_by": qrow["answered_by"],
+                    }
+
+            qrow = conn.execute(
+                """
+                SELECT number, text, answered, answered_by
+                FROM questions
+                WHERE room_name = ? AND number = ? AND answered = 0
+                """,
+                (key, int(number)),
+            ).fetchone()
+            if not qrow:
+                return None
+
+            settings["current_question_number"] = int(number)
+            settings["phase"] = "play"
+            if dice:
+                settings["last_dice"] = dice
+            conn.execute(
+                "UPDATE rooms SET settings = ?, updated_at = ? WHERE room_name = ?",
+                (json.dumps(settings), _utc_now(), key),
+            )
+            return {
+                "number": qrow["number"],
+                "text": qrow["text"],
+                "answered": bool(qrow["answered"]),
+                "answered_by": qrow["answered_by"],
             }
 
     def mark_answered(self, room_name: str, number: int, answered_by: str) -> None:
