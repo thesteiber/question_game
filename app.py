@@ -369,7 +369,7 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
     else:
         _, add_mid, _ = st.columns([1, 2, 1])
         with add_mid:
-            if st.button("Add Player", use_container_width=True, key=f"setup_add_btn_{room_name}"):
+            if st.button("Add Player", type="primary", use_container_width=True, key=f"setup_add_btn_{room_name}"):
                 st.session_state[add_mode_key] = True
                 st.session_state[selected_key] = None
                 st.session_state[rename_key] = None
