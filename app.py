@@ -187,6 +187,17 @@ def render_room_gate() -> None:
                     ):
                         st.session_state["landing_confirm_del"] = name
                         st.rerun()
+                _, archive_mid, _ = st.columns([1, 2, 1])
+                with archive_mid:
+                    if st.button(
+                        "Archive",
+                        key=f"archive_{name}",
+                        use_container_width=True,
+                    ):
+                        db.archive_room(name)
+                        st.session_state.pop("landing_selected_room", None)
+                        st.session_state.pop("landing_confirm_del", None)
+                        st.rerun()
                 _, cancel_mid, _ = st.columns([1, 2, 1])
                 with cancel_mid:
                     if st.button(
@@ -225,6 +236,69 @@ def render_room_gate() -> None:
                 if danger_button("Remove", key=f"unfav_{fav['id']}"):
                     db.remove_favorite(fav["id"])
                     st.rerun()
+
+    archived_rooms = db.list_rooms(archived=True)
+    if archived_rooms:
+        st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
+        confirm_arch_del = st.session_state.get("landing_confirm_arch_del")
+        with st.expander(f"Archived ({len(archived_rooms)})"):
+            for room in archived_rooms:
+                name = room["room_name"]
+                players = ", ".join(room["players"]) if room["players"] else "—"
+                if room["total"]:
+                    progress = f"{room['remaining']} left"
+                else:
+                    progress = "setup"
+                st.markdown(
+                    f'<p class="qg-room-title">{html.escape(name)}</p>'
+                    f'<p class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</p>',
+                    unsafe_allow_html=True,
+                )
+                if confirm_arch_del == name:
+                    yes_c, no_c = st.columns(2, gap="small")
+                    with yes_c:
+                        if danger_button(
+                            "Confirm",
+                            key=f"arch_del_yes_{name}",
+                            use_container_width=True,
+                        ):
+                            db.delete_room(name)
+                            st.session_state.pop("landing_confirm_arch_del", None)
+                            st.rerun()
+                    with no_c:
+                        if st.button(
+                            "Cancel",
+                            key=f"arch_del_no_{name}",
+                            use_container_width=True,
+                        ):
+                            st.session_state.pop("landing_confirm_arch_del", None)
+                            st.rerun()
+                else:
+                    join_c, restore_c = st.columns(2, gap="small")
+                    with join_c:
+                        if st.button(
+                            "Join",
+                            key=f"arch_join_{name}",
+                            use_container_width=True,
+                            type="primary",
+                        ):
+                            enter_room(name)
+                    with restore_c:
+                        if st.button(
+                            "Unarchive",
+                            key=f"arch_restore_{name}",
+                            use_container_width=True,
+                        ):
+                            db.unarchive_room(name)
+                            st.rerun()
+                    if danger_button(
+                        "Delete",
+                        key=f"arch_del_{name}",
+                        use_container_width=True,
+                    ):
+                        st.session_state["landing_confirm_arch_del"] = name
+                        st.rerun()
+                st.markdown('<div style="height:0.65rem"></div>', unsafe_allow_html=True)
 
 
 def render_setup(db: GameDB, room_name: str, room: dict) -> None:

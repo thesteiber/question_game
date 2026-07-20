@@ -69,7 +69,7 @@ class GameDB:
             )
             _migrate_room_names_to_upper(conn)
 
-    def list_rooms(self) -> list[dict[str, Any]]:
+    def list_rooms(self, *, archived: bool = False) -> list[dict[str, Any]]:
         with self._connect() as conn:
             rows = conn.execute(
                 """
@@ -81,6 +81,9 @@ class GameDB:
         rooms = []
         for row in rows:
             room = _room_from_row(row)
+            is_archived = bool((room.get("settings") or {}).get("archived"))
+            if is_archived != archived:
+                continue
             key = room["room_name"]
             remaining = len(self.remaining_questions(key))
             total = self.question_count(key)
@@ -89,9 +92,22 @@ class GameDB:
                     **room,
                     "remaining": remaining,
                     "total": total,
+                    "archived": is_archived,
                 }
             )
         return rooms
+
+    def archive_room(self, room_name: str) -> None:
+        room = self.ensure_room(room_name)
+        settings = dict(room["settings"])
+        settings["archived"] = True
+        self.save_room(room_name, settings=settings)
+
+    def unarchive_room(self, room_name: str) -> None:
+        room = self.ensure_room(room_name)
+        settings = dict(room["settings"])
+        settings["archived"] = False
+        self.save_room(room_name, settings=settings)
 
     def get_room(self, room_name: str) -> dict[str, Any] | None:
         key = _normalize_room(room_name)
