@@ -9,9 +9,9 @@ html, body, [class*="css"] {
 
 .stApp {
   background:
-    radial-gradient(120% 80% at 10% -10%, #ffe8d6 0%, transparent 55%),
-    radial-gradient(90% 60% at 100% 0%, #d9f2ea 0%, transparent 50%),
-    linear-gradient(180deg, #fff8f1 0%, #f3ebe1 100%);
+    radial-gradient(120% 80% at 10% -10%, #e4efe8 0%, transparent 55%),
+    radial-gradient(90% 60% at 100% 0%, #d5e6db 0%, transparent 50%),
+    linear-gradient(180deg, #fff8f1 0%, #eef4f0 100%);
 }
 
 .block-container {
@@ -34,7 +34,7 @@ section[data-testid="stSidebar"] { display: none; }
   font-size: 2.15rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.03em;
-  color: #1a2e2a !important;
+  color: #2c3a34 !important;
   margin-bottom: 0.15rem !important;
   line-height: 1.15 !important;
   text-align: center;
@@ -45,14 +45,14 @@ h1 {
   font-size: 2.15rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.03em;
-  color: #1a2e2a !important;
+  color: #2c3a34 !important;
   margin-bottom: 0.15rem !important;
   line-height: 1.15 !important;
   text-align: center !important;
 }
 
 .qg-subtitle {
-  color: #c45c26;
+  color: #7d9b8a;
   font-size: 1.05rem;
   font-weight: 700;
   margin: 0 0 1.1rem 0;
@@ -76,7 +76,7 @@ h1 {
 
 .qg-chip {
   background: rgba(26, 46, 42, 0.08);
-  color: #1a2e2a;
+  color: #2c3a34;
   border-radius: 999px;
   padding: 0.28rem 0.7rem;
   font-size: 0.8rem;
@@ -84,12 +84,12 @@ h1 {
 }
 
 .qg-chip-accent {
-  background: #1a2e2a;
+  background: #2c3a34;
   color: #fff8f1;
 }
 
 .qg-turn {
-  background: linear-gradient(135deg, #1a2e2a 0%, #2f6b5c 100%);
+  background: linear-gradient(135deg, #2c3a34 0%, #7d9b8a 100%);
   color: #fff8f1;
   border-radius: 18px;
   padding: 0.95rem 1.1rem;
@@ -104,7 +104,7 @@ h1 {
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #c45c26;
+  color: #7d9b8a;
   font-weight: 800;
   margin-bottom: 0.4rem;
   text-align: center;
@@ -115,7 +115,7 @@ h1 {
   font-size: 1.55rem;
   line-height: 1.3;
   font-weight: 600;
-  color: #1a2e2a;
+  color: #2c3a34;
   margin: 0 0 1rem 0;
   text-align: center;
   padding: 1rem 0.85rem;
@@ -138,7 +138,7 @@ h1 {
 
 .qg-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #c45c26, #e8a05a);
+  background: linear-gradient(90deg, #7d9b8a, #e8a05a);
   border-radius: 999px;
   transition: width 0.4s ease;
 }
@@ -164,7 +164,7 @@ h1 {
 .qg-room-card strong {
   font-family: 'Fraunces', Georgia, serif;
   font-size: 1.15rem;
-  color: #1a2e2a;
+  color: #2c3a34;
 }
 
 .qg-room-meta {
@@ -184,7 +184,7 @@ h1 {
 .qg-options-title {
   text-align: center;
   font-weight: 800;
-  color: #1a2e2a;
+  color: #2c3a34;
   margin: 0.15rem 0 0.65rem 0;
 }
 
@@ -210,7 +210,7 @@ h1 {
   font-family: 'Fraunces', Georgia, serif;
   font-size: 1.8rem;
   font-weight: 700;
-  color: #1a2e2a;
+  color: #2c3a34;
   margin-bottom: 0.35rem;
 }
 
@@ -234,9 +234,9 @@ h1 {
   height: 4.6rem;
   border-radius: 1rem;
   background: linear-gradient(145deg, #fffdf9, #f0e4d6);
-  border: 2px solid #1a2e2a;
+  border: 2px solid #2c3a34;
   box-shadow:
-    0 8px 0 #1a2e2a,
+    0 8px 0 #2c3a34,
     0 14px 22px rgba(26, 46, 42, 0.2);
   display: flex;
   align-items: center;
@@ -248,7 +248,7 @@ h1 {
   font-family: 'Fraunces', Georgia, serif;
   font-size: 2.35rem;
   font-weight: 700;
-  color: #1a2e2a;
+  color: #2c3a34;
   line-height: 1;
 }
 
@@ -265,7 +265,7 @@ h1 {
   text-align: center;
   font-size: 1.15rem;
   font-weight: 800;
-  color: #1a2e2a;
+  color: #2c3a34;
   margin: 0.25rem 0 0.15rem 0;
   animation: qg-pop 0.4s ease-out 1.2s both;
 }
@@ -296,7 +296,7 @@ div.stFormSubmitButton > button {
 .qg-idle-dice .qg-die {
   width: 3.4rem;
   height: 3.4rem;
-  box-shadow: 0 5px 0 #1a2e2a;
+  box-shadow: 0 5px 0 #2c3a34;
 }
 
 .qg-idle-dice .qg-die-face {
@@ -333,9 +333,9 @@ div.stFormSubmitButton > button {
 /* Buttons — big phone-friendly taps */
 div.stButton > button[kind="primary"],
 div.stButton > button[data-testid="baseButton-primary"] {
-  background: linear-gradient(135deg, #c45c26, #d9783a) !important;
+  background: linear-gradient(135deg, #7d9b8a, #9bb5a6) !important;
   color: white !important;
-  box-shadow: 0 6px 0 #8f3d12 !important;
+  box-shadow: 0 6px 0 #5c7a6a !important;
 }
 
 div.stButton > button:active {
@@ -380,6 +380,26 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
 }
 
 .stSlider { padding-top: 0.25rem; padding-bottom: 0.5rem; }
+
+div[data-testid="stSlider"] {
+  padding-left: 1.15rem !important;
+  padding-right: 1.15rem !important;
+}
+
+.qg-slider-wrap {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.qg-rooms-block {
+  text-align: center;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+.qg-rooms-block .qg-room-row {
+  text-align: left;
+}
 
 /* Expanders */
 details {

@@ -64,8 +64,8 @@ def render_dice_roll(result: DiceResult) -> None:
     height: 4.7rem;
     border-radius: 1rem;
     background: linear-gradient(145deg, #fffdf9, #f0e4d6);
-    border: 2px solid #1a2e2a;
-    box-shadow: 0 8px 0 #1a2e2a, 0 14px 22px rgba(26,46,42,0.2);
+    border: 2px solid #2c3a34;
+    box-shadow: 0 8px 0 #2c3a34, 0 14px 22px rgba(26,46,42,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -76,14 +76,14 @@ def render_dice_roll(result: DiceResult) -> None:
     font-family: 'Fraunces', Georgia, serif;
     font-size: 2.4rem;
     font-weight: 700;
-    color: #1a2e2a;
+    color: #2c3a34;
     line-height: 1;
   }}
   .result {{
     text-align: center;
     font-size: 1.15rem;
     font-weight: 800;
-    color: #1a2e2a;
+    color: #2c3a34;
     margin: 0.65rem 0 0;
     opacity: 0;
     animation: pop 0.35s ease-out 1.35s forwards;

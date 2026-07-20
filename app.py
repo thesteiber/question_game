@@ -91,52 +91,68 @@ def render_room_gate() -> None:
     st.markdown('<p class="qg-subtitle">a game by Sydney &amp; Niko</p>', unsafe_allow_html=True)
     st.markdown('<div class="qg-landing-mark">🎲</div>', unsafe_allow_html=True)
 
-    with st.form("room_form"):
+    creating = st.session_state.get("creating_room", False)
+    if not creating:
+        left, mid, right = st.columns([1, 2, 1])
+        with mid:
+            if st.button("Create New Room", type="primary", use_container_width=True):
+                st.session_state["creating_room"] = True
+                st.rerun()
+    else:
+        st.markdown('<p class="qg-options-title">New room</p>', unsafe_allow_html=True)
         room = st.text_input(
             "Room name",
             placeholder="enter room name…",
             label_visibility="collapsed",
+            key="new_room_name_input",
         )
-        submitted = st.form_submit_button("Enter", type="primary")
-    if submitted:
-        if not room.strip():
-            st.error("Enter a room name.")
-        else:
-            enter_room(room)
+        confirm, cancel = st.columns(2)
+        with confirm:
+            if st.button("Create", type="primary", use_container_width=True):
+                if not room.strip():
+                    st.error("Enter a room name.")
+                else:
+                    st.session_state.pop("creating_room", None)
+                    enter_room(room)
+        with cancel:
+            if st.button("Cancel", use_container_width=True):
+                st.session_state.pop("creating_room", None)
+                st.rerun()
 
     rooms = db.list_rooms()
     if rooms:
         st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
         st.markdown('<p class="qg-section-label">Rooms</p>', unsafe_allow_html=True)
-        for room in rooms:
-            name = room["room_name"]
-            players = ", ".join(room["players"]) if room["players"] else "—"
-            if room["total"]:
-                progress = f"{room['remaining']} left"
-            else:
-                progress = "setup"
-            st.markdown('<div class="qg-room-row">', unsafe_allow_html=True)
-            st.markdown(
-                f'<div class="qg-room-card"><strong>{html.escape(name)}</strong>'
-                f'<div class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</div></div>',
-                unsafe_allow_html=True,
-            )
-            join_col, delete_col = st.columns(2, gap="small")
-            with join_col:
-                if st.button("Join", key=f"join_{name}", use_container_width=True, type="primary"):
-                    enter_room(name)
-            with delete_col:
-                confirm_key = f"confirm_del_{name}"
-                if st.session_state.get(confirm_key):
-                    if st.button("Confirm", key=f"del_yes_{name}", use_container_width=True):
-                        db.delete_room(name)
-                        st.session_state.pop(confirm_key, None)
-                        st.rerun()
+        _, rooms_col, _ = st.columns([0.08, 0.84, 0.08])
+        with rooms_col:
+            for room in rooms:
+                name = room["room_name"]
+                players = ", ".join(room["players"]) if room["players"] else "—"
+                if room["total"]:
+                    progress = f"{room['remaining']} left"
                 else:
-                    if st.button("Delete", key=f"del_{name}", use_container_width=True):
-                        st.session_state[confirm_key] = True
-                        st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+                    progress = "setup"
+                st.markdown(
+                    f'<div class="qg-room-card"><strong>{html.escape(name)}</strong>'
+                    f'<div class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</div></div>',
+                    unsafe_allow_html=True,
+                )
+                join_col, delete_col = st.columns(2, gap="small")
+                with join_col:
+                    if st.button("Join", key=f"join_{name}", use_container_width=True, type="primary"):
+                        enter_room(name)
+                with delete_col:
+                    confirm_key = f"confirm_del_{name}"
+                    if st.session_state.get(confirm_key):
+                        if st.button("Confirm", key=f"del_yes_{name}", use_container_width=True):
+                            db.delete_room(name)
+                            st.session_state.pop(confirm_key, None)
+                            st.rerun()
+                    else:
+                        if st.button("Delete", key=f"del_{name}", use_container_width=True):
+                            st.session_state[confirm_key] = True
+                            st.rerun()
+                st.markdown('<div style="height:0.65rem"></div>', unsafe_allow_html=True)
 
     favorites = db.list_favorites()
     if favorites:
@@ -151,6 +167,7 @@ def render_room_gate() -> None:
 
 def render_setup(db: GameDB, room_name: str, room: dict) -> None:
     brand_header(f'<strong>{html.escape(room_name)}</strong>')
+    settings = room.get("settings") or {}
 
     st.markdown("##### Players")
     existing = room.get("players") or ["", ""]
@@ -165,16 +182,40 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
     )
 
     st.markdown("##### Vibe")
+    st.markdown('<div class="qg-slider-wrap">', unsafe_allow_html=True)
     coupleyness = st.slider(
         "Coupley-ness",
         min_value=0,
         max_value=200,
-        value=int(room["settings"].get("coupleyness", 100)),
+        value=int(settings.get("coupleyness", 0)),
     )
+    funness = st.slider(
+        "Fun-ness",
+        min_value=0,
+        max_value=200,
+        value=int(settings.get("funness", 0)),
+    )
+    raunch = st.slider(
+        "Raunch",
+        min_value=0,
+        max_value=200,
+        value=int(settings.get("raunch", 0)),
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    would_you_rather = st.checkbox(
+        "Would You Rather",
+        value=bool(settings.get("would_you_rather", False)),
+    )
+    never_have_i_ever = st.checkbox(
+        "Never Have I Ever",
+        value=bool(settings.get("never_have_i_ever", False)),
+    )
+
     vibe = st.text_area(
         "Notes",
-        value=room["settings"].get("vibe", ""),
-        placeholder="optional",
+        value=settings.get("vibe", ""),
+        placeholder="e.g. playful, late-night, less about the future…",
         height=80,
         label_visibility="collapsed",
     )
@@ -183,36 +224,46 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
     if not api_key:
         st.warning("Missing OPENAI_API_KEY in secrets.")
 
-    if st.button("Generate 50 questions", type="primary", disabled=not api_key):
-        players = [p1.strip(), p2.strip()]
-        if extra.strip():
-            players.extend([p.strip() for p in extra.split(",") if p.strip()])
-        players = [p for p in players if p]
-        if len(players) < 2:
-            st.error("Need at least two players.")
-            return
+    leave_col, start_col = st.columns(2)
+    with leave_col:
+        if st.button("Leave room", use_container_width=True):
+            st.session_state.pop("room_name", None)
+            st.rerun()
+    with start_col:
+        if st.button("Start Game", type="primary", use_container_width=True, disabled=not api_key):
+            players = [p1.strip(), p2.strip()]
+            if extra.strip():
+                players.extend([p.strip() for p in extra.split(",") if p.strip()])
+            players = [p for p in players if p]
+            if len(players) < 2:
+                st.error("Need at least two players.")
+                return
 
-        settings = dict(room["settings"])
-        settings["coupleyness"] = coupleyness
-        settings["vibe"] = vibe
-        db.save_room(room_name, players=players, settings=settings)
+            next_settings = dict(settings)
+            next_settings["coupleyness"] = coupleyness
+            next_settings["funness"] = funness
+            next_settings["raunch"] = raunch
+            next_settings["would_you_rather"] = would_you_rather
+            next_settings["never_have_i_ever"] = never_have_i_ever
+            next_settings["vibe"] = vibe
+            db.save_room(room_name, players=players, settings=next_settings)
 
-        with st.spinner("Generating…"):
-            try:
-                questions = generate_questions(
-                    api_key=api_key,
-                    coupleyness=coupleyness,
-                    vibe=vibe,
-                    model=get_model(),
-                )
-                db.replace_questions(room_name, questions)
-                st.rerun()
-            except Exception:
-                st.error("Could not generate questions.")
-
-    if st.button("Leave room"):
-        st.session_state.pop("room_name", None)
-        st.rerun()
+            with st.spinner("Generating…"):
+                try:
+                    questions = generate_questions(
+                        api_key=api_key,
+                        coupleyness=coupleyness,
+                        vibe=vibe,
+                        funness=funness,
+                        raunch=raunch,
+                        would_you_rather=would_you_rather,
+                        never_have_i_ever=never_have_i_ever,
+                        model=get_model(),
+                    )
+                    db.replace_questions(room_name, questions)
+                    st.rerun()
+                except Exception:
+                    st.error("Could not generate questions.")
 
 
 def _render_roll_screen(db: GameDB, room_name: str, room: dict, remaining: list[dict]) -> None:

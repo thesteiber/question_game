@@ -161,7 +161,11 @@ class GameDB:
             return existing
         key = _normalize_room(room_name)
         settings = {
-            "coupleyness": 100,
+            "coupleyness": 0,
+            "funness": 0,
+            "raunch": 0,
+            "would_you_rather": False,
+            "never_have_i_ever": False,
             "vibe": "",
             "current_player_index": 0,
             "current_question_number": None,

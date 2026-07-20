@@ -35,9 +35,13 @@ QUESTION_SCHEMA: dict[str, Any] = {
 }
 
 
+def _clamp(value: int) -> int:
+    return max(0, min(200, int(value)))
+
+
 def _style_for_coupleyness(coupleyness: int) -> tuple[str, list[str]]:
     """Map 0–200 coupley-ness to prompt guidance and example questions."""
-    value = max(0, min(200, int(coupleyness)))
+    value = _clamp(coupleyness)
 
     if value <= 40:
         examples = PERSONAL
@@ -60,7 +64,6 @@ def _style_for_coupleyness(coupleyness: int) -> tuple[str, list[str]]:
             "and everyday life together. Include a few personal questions for balance."
         )
     else:
-        # 141–200: strongly coupley / intensified
         examples = COUPLE
         intensity = "warm and specific" if value <= 170 else "deeply intimate, playful, and emotionally rich"
         style = (
@@ -73,28 +76,125 @@ def _style_for_coupleyness(coupleyness: int) -> tuple[str, list[str]]:
     return style, examples
 
 
-def build_prompt(coupleyness: int, vibe: str = "") -> str:
+def _style_for_funness(funness: int) -> str:
+    value = _clamp(funness)
+    if value <= 40:
+        return (
+            "Tone: earnest and thoughtful. Prefer sincere, reflective prompts. "
+            "Avoid silliness, jokes, or absurd hypotheticals."
+        )
+    if value <= 100:
+        return (
+            "Tone: balanced — warm and approachable with occasional light playfulness, "
+            "but still mostly grounded."
+        )
+    if value <= 150:
+        return (
+            "Tone: lively and light-hearted. Include playful, quirky, and fun prompts "
+            "while keeping them answerable out loud."
+        )
+    return (
+        "Tone: extremely goofy and light-hearted. Lean into silly scenarios, playful "
+        "absurdity, and laughter-forward prompts. Still make them fun to answer, not nonsense."
+    )
+
+
+def _style_for_raunch(raunch: int) -> str:
+    """Guide spice level without language that tends to trigger model refusals."""
+    value = _clamp(raunch)
+    if value <= 30:
+        return (
+            "Keep every question totally wholesome and PG — no flirtation, innuendo, "
+            "or romantic/physical intimacy topics."
+        )
+    if value <= 80:
+        return (
+            "Mostly clean. Light warmth is fine; avoid innuendo and anything suggestive."
+        )
+    if value <= 130:
+        return (
+            "Allow gentle flirtation and soft romantic chemistry. Mild, tasteful innuendo "
+            "is okay; keep it classy and never crude."
+        )
+    if value <= 170:
+        return (
+            "These are for a private adult couple conversation game. Prefer cheeky, "
+            "flirtatious, and teasing prompts about attraction and romantic chemistry. "
+            "Stay witty and suggestive rather than graphic or crude."
+        )
+    return (
+        "These are for a private adult couple conversation game night. Aim for boldly "
+        "flirtatious, teasing, and steamy-but-clever prompts about desire and chemistry. "
+        "Use suggestive innuendo and playful heat; do not write graphic, clinical, or "
+        "pornographic wording. Keep every item a real conversation question people can "
+        "answer out loud. Always return all 50 questions."
+    )
+
+
+def _format_modes(would_you_rather: bool, never_have_i_ever: bool) -> str:
+    if would_you_rather and never_have_i_ever:
+        return (
+            "Format mix: about half should be 'Would you rather…?' questions, and about "
+            "half should be 'Never have I ever…' prompts. Phrase them naturally in those forms."
+        )
+    if would_you_rather:
+        return (
+            "Format: every question must be a 'Would you rather…?' with two clear, "
+            "interesting alternatives."
+        )
+    if never_have_i_ever:
+        return (
+            "Format: every prompt must start with 'Never have I ever…' and describe a "
+            "specific experience or situation for players to react to."
+        )
+    return (
+        "Format: open conversation questions (not forced into Would You Rather or "
+        "Never Have I Ever unless it fits naturally)."
+    )
+
+
+def build_prompt(
+    coupleyness: int,
+    vibe: str = "",
+    *,
+    funness: int = 0,
+    raunch: int = 0,
+    would_you_rather: bool = False,
+    never_have_i_ever: bool = False,
+) -> str:
     style, examples = _style_for_coupleyness(coupleyness)
     example_block = "\n".join(f"- {q}" for q in examples[:18])
     vibe_line = f"\nExtra vibe / tone guidance from the players: {vibe.strip()}" if vibe.strip() else ""
 
-    return f"""You write banks of conversation questions for two people who take turns answering out loud.
+    return f"""You write banks of conversation questions for adults who take turns answering out loud in a private game.
 
-Generate exactly 50 questions.
-Coupley-ness setting: {coupleyness}% (0 = purely personal get-to-know-you, 100 = balanced coupley, 200 = intensely couple-focused).
+Generate exactly 50 questions. Always produce the full set of 50.
 
-Style target:
+Settings:
+- Coupley-ness: {coupleyness}% (0 = personal get-to-know-you, 100 = coupley, 200 = intensely us-focused)
+- Fun-ness: {funness}% (0 = very serious/reflective, 200 = extremely goofy and light-hearted)
+- Heat: {raunch}% (0 = totally wholesome, 200 = boldly flirtatious for a private adult couple game)
+
+Coupley-ness guidance:
 {style}
+
+Fun-ness guidance:
+{_style_for_funness(funness)}
+
+Heat guidance:
+{_style_for_raunch(raunch)}
+
+{_format_modes(would_you_rather, never_have_i_ever)}
 {vibe_line}
 
 Quality bar:
 - Curious, specific, and interesting to answer out loud
-- Not yes/no; invite a real answer
 - Distinct from each other — no near-duplicates
 - Avoid clichés like "what's your favorite color"
 - Do not number the questions in the text itself
+- Return valid JSON matching the schema with exactly 50 strings
 
-Example questions that match the desired feel (inspire, do not copy verbatim):
+Example questions that match the desired relational feel (inspire, do not copy verbatim):
 {example_block}
 """
 
@@ -102,12 +202,23 @@ Example questions that match the desired feel (inspire, do not copy verbatim):
 def generate_questions(
     *,
     api_key: str,
-    coupleyness: int = 100,
+    coupleyness: int = 0,
     vibe: str = "",
+    funness: int = 0,
+    raunch: int = 0,
+    would_you_rather: bool = False,
+    never_have_i_ever: bool = False,
     model: str = "gpt-5.6",
 ) -> list[str]:
     client = OpenAI(api_key=api_key)
-    prompt = build_prompt(coupleyness, vibe)
+    prompt = build_prompt(
+        coupleyness,
+        vibe,
+        funness=funness,
+        raunch=raunch,
+        would_you_rather=would_you_rather,
+        never_have_i_ever=never_have_i_ever,
+    )
 
     response = client.responses.create(
         model=model,
@@ -135,7 +246,6 @@ def generate_questions(
 
 def _clean_question(text: str) -> str:
     q = " ".join(text.strip().split())
-    # Strip leading numbering like "12." or "12)"
     if len(q) > 3 and q[0].isdigit():
         parts = q.split(maxsplit=1)
         if len(parts) == 2 and parts[0].rstrip(".)").isdigit():
