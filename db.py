@@ -97,6 +97,9 @@ class GameDB:
             )
         return rooms
 
+    def list_archived_rooms(self) -> list[dict[str, Any]]:
+        return self.list_rooms(archived=True)
+
     def archive_room(self, room_name: str) -> None:
         room = self.ensure_room(room_name)
         settings = dict(room["settings"])

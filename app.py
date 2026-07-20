@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import html
+import importlib
 import time
 from datetime import timedelta
 
 import streamlit as st
 
-from db import GameDB
+import db as db_module
 from dice import DiceResult, idle_dice_html, render_dice_roll, roll_until_valid
 from openai_questions import generate_questions
 from styles import APP_CSS
@@ -25,10 +26,11 @@ st.markdown(f"<style>{APP_CSS}</style>", unsafe_allow_html=True)
 DICE_REVEAL_SECONDS = 1.7
 
 
-def get_db() -> GameDB:
-    # Always construct fresh so redeploys pick up new GameDB methods
-    # (session_state would otherwise keep a stale class instance).
-    return GameDB()
+def get_db():
+    # Reload so Streamlit Cloud redeploys pick up new GameDB methods
+    # instead of keeping a stale imported class in memory.
+    importlib.reload(db_module)
+    return db_module.GameDB()
 
 
 def get_api_key() -> str | None:
@@ -237,7 +239,7 @@ def render_room_gate() -> None:
                     db.remove_favorite(fav["id"])
                     st.rerun()
 
-    archived_rooms = db.list_rooms(archived=True)
+    archived_rooms = db.list_archived_rooms()
     if archived_rooms:
         st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
         confirm_arch_del = st.session_state.get("landing_confirm_arch_del")
