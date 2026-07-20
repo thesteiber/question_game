@@ -106,27 +106,48 @@ h1 {
   text-transform: uppercase;
   color: #7d9b8a;
   font-weight: 800;
-  margin: 0.15rem 0 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .qg-fav-mark {
   display: none;
 }
 
-/* Compact star between question number and question text */
+/* Collapse the hidden marker widget so it adds no height */
+div[data-testid="element-container"]:has(.qg-fav-mark),
+div[data-testid="stElementContainer"]:has(.qg-fav-mark) {
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Compact full-width star (glyph centered, no chrome) */
+div[data-testid="element-container"]:has(.qg-fav-mark)
+  + div[data-testid="element-container"],
+div[data-testid="stElementContainer"]:has(.qg-fav-mark)
+  + div[data-testid="stElementContainer"] {
+  margin-top: -1.05rem !important;
+  margin-bottom: -1.05rem !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 div[data-testid="element-container"]:has(.qg-fav-mark)
   + div[data-testid="element-container"]
   button,
 div[data-testid="stElementContainer"]:has(.qg-fav-mark)
   + div[data-testid="stElementContainer"]
   button {
-  min-height: 1.55rem !important;
-  height: 1.55rem !important;
+  min-height: 1.2rem !important;
+  height: 1.2rem !important;
   padding: 0 !important;
   margin: 0 !important;
-  font-size: 1.2rem !important;
+  font-size: 1.05rem !important;
   font-weight: 500 !important;
   line-height: 1 !important;
   background: transparent !important;
@@ -144,15 +165,15 @@ div[data-testid="stElementContainer"]:has(.qg-fav-mark.qg-fav-on)
   color: #c4a4a8 !important;
 }
 
-/* Tighten vertical gaps around number → star → question */
+/* Pull number / question toward the star */
 div[data-testid="element-container"]:has(.qg-number),
 div[data-testid="stElementContainer"]:has(.qg-number) {
-  margin-bottom: -0.65rem !important;
+  margin-bottom: -0.95rem !important;
 }
 
 div[data-testid="element-container"]:has(.qg-question),
 div[data-testid="stElementContainer"]:has(.qg-question) {
-  margin-top: -0.45rem !important;
+  margin-top: -0.95rem !important;
 }
 
 .qg-question {
@@ -161,7 +182,7 @@ div[data-testid="stElementContainer"]:has(.qg-question) {
   line-height: 1.3;
   font-weight: 600;
   color: #2c3a34;
-  margin: 0.15rem 0 1rem 0;
+  margin: 0 0 1rem 0;
   text-align: center;
   padding: 1rem 0.85rem;
   background: rgba(255,255,255,0.72);

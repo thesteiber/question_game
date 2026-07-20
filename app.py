@@ -588,24 +588,22 @@ def _render_question_card(
         f'<div class="qg-number">Question {question["number"]}</div>',
         unsafe_allow_html=True,
     )
-    _, fav_mid, _ = st.columns([2, 1, 2])
-    with fav_mid:
-        st.markdown(
-            f'<div class="qg-fav-mark {fav_class}"></div>',
-            unsafe_allow_html=True,
+    st.markdown(
+        f'<div class="qg-fav-mark {fav_class}"></div>',
+        unsafe_allow_html=True,
+    )
+    if st.button(
+        fav_label,
+        key=f"fav_{room_name}_{question['number']}",
+        use_container_width=True,
+        help="Favorite",
+    ):
+        db.toggle_favorite(
+            question["text"],
+            room_name=room_name,
+            source_number=question["number"],
         )
-        if st.button(
-            fav_label,
-            key=f"fav_{room_name}_{question['number']}",
-            use_container_width=True,
-            help="Favorite",
-        ):
-            db.toggle_favorite(
-                question["text"],
-                room_name=room_name,
-                source_number=question["number"],
-            )
-            st.rerun()
+        st.rerun()
 
     st.markdown(
         f'<div class="qg-question">{html.escape(question["text"])}</div>',
