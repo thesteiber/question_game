@@ -607,8 +607,8 @@ def _render_question_card(
             st.session_state.pop("just_rolled", None)
             st.rerun()
     with col_fav:
-        if st.button(fav_label, disabled=favorited, use_container_width=True):
-            db.add_favorite(
+        if st.button(fav_label, use_container_width=True):
+            db.toggle_favorite(
                 question["text"],
                 room_name=room_name,
                 source_number=question["number"],
@@ -785,10 +785,9 @@ def _answered_expander(
                 if st.button(
                     label,
                     key=f"fav_done_{room_name}_{q['number']}",
-                    disabled=favorited,
                     use_container_width=True,
                 ):
-                    db.add_favorite(
+                    db.toggle_favorite(
                         q["text"],
                         room_name=room_name,
                         source_number=q["number"],

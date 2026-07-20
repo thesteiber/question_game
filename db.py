@@ -486,6 +486,18 @@ class GameDB:
         with self._connect() as conn:
             conn.execute("DELETE FROM favorites WHERE id = ?", (favorite_id,))
 
+    def remove_favorite_text(self, question_text: str) -> bool:
+        """Remove a favorite by question text. Returns True if something was removed."""
+        text = " ".join(question_text.strip().split())
+        if not text:
+            return False
+        with self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM favorites WHERE question_text = ?",
+                (text,),
+            )
+            return cur.rowcount > 0
+
     def is_favorited(self, question_text: str) -> bool:
         text = " ".join(question_text.strip().split())
         with self._connect() as conn:
@@ -494,6 +506,24 @@ class GameDB:
                 (text,),
             ).fetchone()
         return row is not None
+
+    def toggle_favorite(
+        self,
+        question_text: str,
+        *,
+        room_name: str | None = None,
+        source_number: int | None = None,
+    ) -> bool:
+        """Favorite if not saved; unfavorite if already saved. Returns new favorited state."""
+        if self.is_favorited(question_text):
+            self.remove_favorite_text(question_text)
+            return False
+        self.add_favorite(
+            question_text,
+            room_name=room_name,
+            source_number=source_number,
+        )
+        return True
 
     def list_favorites(self) -> list[dict[str, Any]]:
         with self._connect() as conn:
