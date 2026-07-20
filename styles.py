@@ -357,9 +357,12 @@ div.stButton > button:active {
   transform: translateY(2px);
 }
 
-/* Pastel-red danger buttons (Delete / Confirm delete) */
+/* Pastel-red danger buttons (Delete / Remove / Reset / Skip) */
 div[data-testid="element-container"]:has(.qg-btn-danger-mark)
   + div[data-testid="element-container"]
+  button,
+div[data-testid="stElementContainer"]:has(.qg-btn-danger-mark)
+  + div[data-testid="stElementContainer"]
   button {
   background: linear-gradient(135deg, #e8b4b8, #f0c8cb) !important;
   color: #6b3a3e !important;

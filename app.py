@@ -222,7 +222,7 @@ def render_room_gate() -> None:
         with st.expander(f"Favorites ({len(favorites)})"):
             for fav in favorites:
                 st.markdown(f"• {html.escape(fav['question_text'])}")
-                if st.button("Remove", key=f"unfav_{fav['id']}"):
+                if danger_button("Remove", key=f"unfav_{fav['id']}"):
                     db.remove_favorite(fav["id"])
                     st.rerun()
 
@@ -602,7 +602,7 @@ def _render_question_card(
 
     col_skip, col_fav = st.columns(2)
     with col_skip:
-        if st.button("Skip", use_container_width=True):
+        if danger_button("Skip", key=f"skip_{room_name}_{question['number']}", use_container_width=True):
             db.skip_question(room_name, question["number"])
             st.session_state.pop("just_rolled", None)
             st.rerun()
@@ -643,7 +643,7 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
         progress_bar(0, total)
         col_a, col_b = st.columns(2)
         with col_a:
-            if st.button("Reset", use_container_width=True):
+            if danger_button("Reset", key=f"done_reset_{room_name}", use_container_width=True):
                 db.reset_progress(room_name)
                 st.rerun()
         with col_b:
@@ -708,7 +708,7 @@ def _render_options_panel(db: GameDB, room_name: str, player_names: list[str]) -
             st.caption("Need at least one player.")
         else:
             for name in player_names:
-                if st.button(
+                if danger_button(
                     name,
                     key=f"remove_pick_{room_name}_{name}",
                     use_container_width=True,
@@ -728,7 +728,11 @@ def _render_options_panel(db: GameDB, room_name: str, player_names: list[str]) -
             st.session_state[mode_key] = "add"
             st.rerun()
     with row1_b:
-        if st.button("Remove player", use_container_width=True, key=f"opt_remove_{room_name}"):
+        if danger_button(
+            "Remove player",
+            use_container_width=True,
+            key=f"opt_remove_{room_name}",
+        ):
             st.session_state[mode_key] = "remove"
             st.rerun()
 
@@ -740,7 +744,7 @@ def _render_options_panel(db: GameDB, room_name: str, player_names: list[str]) -
             st.session_state.pop(mode_key, None)
             st.rerun()
     with row2_b:
-        if st.button("Reset", use_container_width=True, key=f"opt_reset_{room_name}"):
+        if danger_button("Reset", use_container_width=True, key=f"opt_reset_{room_name}"):
             db.reset_progress(room_name)
             st.session_state.pop("just_rolled", None)
             st.session_state.pop(mode_key, None)
