@@ -122,7 +122,6 @@ def render_room_gate() -> None:
     rooms = db.list_rooms()
     if rooms:
         st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
-        st.markdown('<p class="qg-section-label">Rooms</p>', unsafe_allow_html=True)
         _, rooms_col, _ = st.columns([0.08, 0.84, 0.08])
         with rooms_col:
             for room in rooms:
