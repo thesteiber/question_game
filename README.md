@@ -1,6 +1,6 @@
 # Question Game
 
-Mobile-friendly conversation game: generate a bank of 50 questions with OpenAI, take turns, and auto-cross off what’s already been answered.
+Mobile-friendly conversation game: generate a bank of 55 questions with OpenAI, take turns, and auto-cross off what’s already been answered.
 
 ## How it works
 

@@ -199,8 +199,8 @@ class GameDB:
     def replace_questions(self, room_name: str, questions: list[str]) -> None:
         room = self.ensure_room(room_name)
         key = room["room_name"]
-        if len(questions) != 50:
-            raise ValueError("Expected exactly 50 questions")
+        if len(questions) != 55:
+            raise ValueError("Expected exactly 55 questions")
         with self._connect() as conn:
             conn.execute("DELETE FROM questions WHERE room_name = ?", (key,))
             conn.executemany(

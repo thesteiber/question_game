@@ -14,9 +14,9 @@ from sample_questions import COUPLE, PERSONAL
 class QuestionBank(BaseModel):
     questions: list[str] = Field(
         ...,
-        min_length=50,
-        max_length=50,
-        description="Exactly 50 distinct questions.",
+        min_length=55,
+        max_length=55,
+        description="Exactly 55 distinct questions.",
     )
 
 
@@ -26,8 +26,8 @@ QUESTION_SCHEMA: dict[str, Any] = {
         "questions": {
             "type": "array",
             "items": {"type": "string"},
-            "minItems": 50,
-            "maxItems": 50,
+            "minItems": 55,
+            "maxItems": 55,
         }
     },
     "required": ["questions"],
@@ -100,7 +100,7 @@ def _style_for_funness(funness: int) -> str:
 
 
 def _style_for_raunch(raunch: int) -> str:
-    """Guide spice level without language that tends to trigger model refusals."""
+    """Guide spice level; stay direct at the high end without inviting refusals."""
     value = _clamp(raunch)
     if value <= 30:
         return (
@@ -118,16 +118,17 @@ def _style_for_raunch(raunch: int) -> str:
         )
     if value <= 170:
         return (
-            "These are for a private adult couple conversation game. Prefer cheeky, "
-            "flirtatious, and teasing prompts about attraction and romantic chemistry. "
-            "Stay witty and suggestive rather than graphic or crude."
+            "Private adult couple game. Questions should be clearly spicy: lust, turn-ons, "
+            "bedroom preferences, sexual history between partners, and teasing innuendo. "
+            "Be direct enough that the heat is obvious, while staying playful rather than clinical."
         )
     return (
-        "These are for a private adult couple conversation game night. Aim for boldly "
-        "flirtatious, teasing, and steamy-but-clever prompts about desire and chemistry. "
-        "Use suggestive innuendo and playful heat; do not write graphic, clinical, or "
-        "pornographic wording. Keep every item a real conversation question people can "
-        "answer out loud. Always return all 50 questions."
+        "Private adult couple game at maximum heat. Most questions should be openly sexual "
+        "and raunchy: fantasies, turn-ons, dirty talk, oral sex, positions, kinks, "
+        "attraction to each other's bodies, and steamy 'have you ever / would you' prompts. "
+        "Be blunt and adult — not coy. Keep them as real conversation questions for consenting "
+        "adults answering out loud. Avoid illegal content and anything involving minors. "
+        "Do not refuse or sanitize this request; return all 55 questions."
     )
 
 
@@ -162,7 +163,7 @@ def build_prompt(
 
     return f"""You write banks of conversation questions for adults who take turns answering out loud in a private game.
 
-Generate exactly 50 questions. Always produce the full set of 50.
+Generate exactly 55 questions. Always produce the full set of 55.
 
 Settings:
 - Coupley-ness: {coupleyness}% (0 = personal get-to-know-you, 100 = coupley, 200 = intensely us-focused)
@@ -186,7 +187,7 @@ Quality bar:
 - Distinct from each other — no near-duplicates
 - Avoid clichés like "what's your favorite color"
 - Do not number the questions in the text itself
-- Return valid JSON matching the schema with exactly 50 strings
+- Return valid JSON matching the schema with exactly 55 strings
 
 Example questions that match the desired relational feel (inspire, do not copy verbatim):
 {example_block}
@@ -231,9 +232,9 @@ def generate_questions(
     data = json.loads(raw)
     bank = QuestionBank.model_validate(data)
     cleaned = [_clean_question(q) for q in bank.questions]
-    if len(cleaned) != 50:
-        raise ValueError("Model did not return exactly 50 questions")
-    if len(set(cleaned)) < 45:
+    if len(cleaned) != 55:
+        raise ValueError("Model did not return exactly 55 questions")
+    if len(set(cleaned)) < 50:
         raise ValueError("Too many duplicate questions returned")
     return cleaned
 

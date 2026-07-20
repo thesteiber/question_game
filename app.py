@@ -187,17 +187,19 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
 
     if players:
         for i, name in enumerate(players):
-            name_col, rm_col = st.columns([5, 1])
+            st.markdown('<div class="qg-player-block">', unsafe_allow_html=True)
+            name_col, rm_col = st.columns([6, 1], gap="small")
             with name_col:
                 st.markdown(
                     f'<div class="qg-player-row">{html.escape(name)}</div>',
                     unsafe_allow_html=True,
                 )
             with rm_col:
-                if st.button("✕", key=f"setup_rm_{room_name}_{i}_{name}", use_container_width=True):
+                if st.button("🗑", key=f"setup_rm_{room_name}_{i}_{name}", use_container_width=True):
                     players.pop(i)
                     st.session_state[players_key] = players
                     st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.get(add_mode_key):
         st.markdown('<p class="qg-options-title">New player</p>', unsafe_allow_html=True)

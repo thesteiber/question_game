@@ -1,7 +1,7 @@
 """Dice-based question picking for Question Game.
 
 Two dice show digits 0–5. Concatenated they form 00–55.
-We keep rolling until we land on a remaining question number (1–50).
+We keep rolling until we land on a remaining question number (1–55).
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ def roll_until_valid(remaining_numbers: set[int], *, max_attempts: int = 200) ->
         if number in remaining_numbers:
             return DiceResult(tens=tens, ones=ones, number=number, attempts=attempt)
 
-    # Extremely unlikely with 1–50 pool; fall back so the game never stalls.
+    # Extremely unlikely with 1–55 pool; fall back so the game never stalls.
     number = random.choice(sorted(remaining_numbers))
     return DiceResult(tens=number // 10, ones=number % 10, number=number, attempts=max_attempts)
 

@@ -392,18 +392,30 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
 }
 
 .qg-player-row {
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(44, 58, 52, 0.1);
+  background: linear-gradient(135deg, #e7efe9 0%, #d8e6dc 100%);
+  border: 1px solid rgba(125, 155, 138, 0.45);
   border-radius: 14px;
-  padding: 0.7rem 0.9rem;
+  padding: 0.72rem 0.95rem;
   text-align: center;
   font-weight: 700;
   color: #2c3a34;
+  box-shadow: 0 2px 8px rgba(44, 58, 52, 0.06);
+}
+
+.qg-player-block {
   margin-bottom: 0.15rem;
+}
+
+/* Keep paired columns (name+trash, join+delete, etc.) on one row */
+div[data-testid="stHorizontalBlock"] {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
 }
 
 .qg-mode-toggles {
   margin: 0.35rem 0 0.85rem 0;
+  padding-left: 1.15rem;
+  padding-right: 1.15rem;
 }
 
 div[data-testid="stToggle"] {
