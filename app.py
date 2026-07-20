@@ -661,10 +661,6 @@ def _render_question_card(
     fav_class = "qg-fav-on" if favorited else "qg-fav-off"
 
     st.markdown(
-        f'<div class="qg-number">Question {question["number"]}</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
         f'<div class="qg-fav-mark {fav_class}"></div>',
         unsafe_allow_html=True,
     )

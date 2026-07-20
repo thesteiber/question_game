@@ -101,15 +101,7 @@ h1 {
 }
 
 .qg-number {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #7d9b8a;
-  font-weight: 800;
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: center;
-  line-height: 1.15;
+  display: none;
 }
 
 .qg-fav-mark {
@@ -166,11 +158,6 @@ div[data-testid="stElementContainer"]:has(.qg-fav-mark.qg-fav-on)
 }
 
 /* Mild pull — enough to feel tight, not enough to overlap */
-div[data-testid="element-container"]:has(.qg-number),
-div[data-testid="stElementContainer"]:has(.qg-number) {
-  margin-bottom: -0.4rem !important;
-}
-
 div[data-testid="element-container"]:has(.qg-question),
 div[data-testid="stElementContainer"]:has(.qg-question) {
   margin-top: -0.15rem !important;
