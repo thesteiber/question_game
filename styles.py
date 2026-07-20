@@ -291,7 +291,10 @@ div.stFormSubmitButton > button {
   font-size: 1.05rem !important;
   font-weight: 800 !important;
   border-radius: 14px !important;
-  border: none !important;
+  border: 1px solid rgba(44, 58, 52, 0.1) !important;
+  background: linear-gradient(145deg, #f7efe4, #eadfcf) !important;
+  color: #2c3a34 !important;
+  box-shadow: 0 5px 0 #c4b5a0 !important;
 }
 
 .qg-idle-dice {
@@ -339,11 +342,14 @@ div.stFormSubmitButton > button {
   0%, 12%  { opacity: 1; }
 }
 
-/* Buttons — big phone-friendly taps */
+/* Primary actions stay sage */
 div.stButton > button[kind="primary"],
-div.stButton > button[data-testid="baseButton-primary"] {
+div.stButton > button[data-testid="baseButton-primary"],
+div.stFormSubmitButton > button[kind="primary"],
+div.stFormSubmitButton > button[data-testid="baseButton-primary"] {
   background: linear-gradient(135deg, #7d9b8a, #9bb5a6) !important;
   color: white !important;
+  border: none !important;
   box-shadow: 0 6px 0 #5c7a6a !important;
 }
 

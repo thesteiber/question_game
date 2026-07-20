@@ -203,7 +203,6 @@ def render_room_gate() -> None:
                     name,
                     key=f"room_pick_{name}",
                     use_container_width=True,
-                    type="primary",
                 ):
                     st.session_state["landing_selected_room"] = name
                     st.session_state.pop("landing_confirm_del", None)
