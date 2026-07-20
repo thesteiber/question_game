@@ -140,13 +140,13 @@ def render_room_gate() -> None:
                 progress = "setup"
 
             st.markdown('<div class="qg-player-block">', unsafe_allow_html=True)
-            st.markdown(
-                f'<p class="qg-room-meta" style="text-align:center;margin:0 0 0.35rem 0">'
-                f"{html.escape(players)} · {html.escape(progress)}</p>",
-                unsafe_allow_html=True,
-            )
 
             if confirm_del == name:
+                st.markdown(
+                    f'<p class="qg-room-title">{html.escape(name)}</p>'
+                    f'<p class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</p>',
+                    unsafe_allow_html=True,
+                )
                 yes_c, no_c = st.columns(2, gap="small")
                 with yes_c:
                     if danger_button(
@@ -164,6 +164,11 @@ def render_room_gate() -> None:
                         st.rerun()
 
             elif selected_room == name:
+                st.markdown(
+                    f'<p class="qg-room-title">{html.escape(name)}</p>'
+                    f'<p class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</p>',
+                    unsafe_allow_html=True,
+                )
                 join_c, del_c = st.columns(2, gap="small")
                 with join_c:
                     if st.button(
@@ -203,6 +208,10 @@ def render_room_gate() -> None:
                     st.session_state.pop("landing_confirm_del", None)
                     st.session_state.pop("creating_room", None)
                     st.rerun()
+                st.markdown(
+                    f'<p class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</p>',
+                    unsafe_allow_html=True,
+                )
 
             st.markdown("</div>", unsafe_allow_html=True)
             st.markdown('<div style="height:0.5rem"></div>', unsafe_allow_html=True)
