@@ -19,7 +19,15 @@ html, body, [class*="css"] {
   padding-bottom: 3.5rem !important;
   padding-left: 1rem !important;
   padding-right: 1rem !important;
-  max-width: 28rem;
+  max-width: min(28rem, 100%) !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
 }
 
 /* Hide Streamlit chrome for a game-like feel */
@@ -402,14 +410,13 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
   box-shadow: 0 2px 8px rgba(44, 58, 52, 0.06);
 }
 
-.qg-player-block {
-  margin-bottom: 0.15rem;
-}
-
-/* Keep paired columns (name+trash, join+delete, etc.) on one row */
-div[data-testid="stHorizontalBlock"] {
-  flex-wrap: nowrap !important;
-  align-items: center !important;
+/* Setup player chips (name + trash as one button) */
+div.stButton > button[kind="secondary"],
+div.stButton > button[data-testid="baseButton-secondary"] {
+  background: linear-gradient(135deg, #e7efe9 0%, #d8e6dc 100%) !important;
+  color: #2c3a34 !important;
+  border: 1px solid rgba(125, 155, 138, 0.45) !important;
+  box-shadow: 0 2px 8px rgba(44, 58, 52, 0.06) !important;
 }
 
 .qg-mode-toggles {
