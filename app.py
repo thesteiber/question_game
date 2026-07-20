@@ -53,6 +53,12 @@ def current_player(room: dict) -> str | None:
     return players[idx]
 
 
+def danger_button(label: str, *, key: str, **kwargs) -> bool:
+    """Secondary button styled pastel-red via a marker + adjacent CSS."""
+    st.markdown('<div class="qg-btn-danger-mark"></div>', unsafe_allow_html=True)
+    return st.button(label, key=key, **kwargs)
+
+
 def enter_room(room_name: str) -> None:
     db = get_db()
     db.ensure_room(room_name)
@@ -122,6 +128,9 @@ def render_room_gate() -> None:
     rooms = db.list_rooms()
     if rooms:
         st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
+        selected_room = st.session_state.get("landing_selected_room")
+        confirm_del = st.session_state.get("landing_confirm_del")
+
         for room in rooms:
             name = room["room_name"]
             players = ", ".join(room["players"]) if room["players"] else "—"
@@ -129,27 +138,74 @@ def render_room_gate() -> None:
                 progress = f"{room['remaining']} left"
             else:
                 progress = "setup"
+
+            st.markdown('<div class="qg-player-block">', unsafe_allow_html=True)
             st.markdown(
-                f'<div class="qg-room-card"><strong>{html.escape(name)}</strong>'
-                f'<div class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</div></div>',
+                f'<p class="qg-room-meta" style="text-align:center;margin:0 0 0.35rem 0">'
+                f"{html.escape(players)} · {html.escape(progress)}</p>",
                 unsafe_allow_html=True,
             )
-            join_col, delete_col = st.columns(2, gap="small")
-            with join_col:
-                if st.button("Join", key=f"join_{name}", use_container_width=True, type="primary"):
-                    enter_room(name)
-            with delete_col:
-                confirm_key = f"confirm_del_{name}"
-                if st.session_state.get(confirm_key):
-                    if st.button("Confirm", key=f"del_yes_{name}", use_container_width=True):
+
+            if confirm_del == name:
+                yes_c, no_c = st.columns(2, gap="small")
+                with yes_c:
+                    if danger_button(
+                        "Confirm",
+                        key=f"del_yes_{name}",
+                        use_container_width=True,
+                    ):
                         db.delete_room(name)
-                        st.session_state.pop(confirm_key, None)
+                        st.session_state.pop("landing_confirm_del", None)
+                        st.session_state.pop("landing_selected_room", None)
                         st.rerun()
-                else:
-                    if st.button("Delete", key=f"del_{name}", use_container_width=True):
-                        st.session_state[confirm_key] = True
+                with no_c:
+                    if st.button("Cancel", key=f"del_no_{name}", use_container_width=True):
+                        st.session_state.pop("landing_confirm_del", None)
                         st.rerun()
-            st.markdown('<div style="height:0.65rem"></div>', unsafe_allow_html=True)
+
+            elif selected_room == name:
+                join_c, del_c = st.columns(2, gap="small")
+                with join_c:
+                    if st.button(
+                        "Join",
+                        key=f"join_{name}",
+                        use_container_width=True,
+                        type="primary",
+                    ):
+                        st.session_state.pop("landing_selected_room", None)
+                        enter_room(name)
+                with del_c:
+                    if danger_button(
+                        "Delete",
+                        key=f"del_{name}",
+                        use_container_width=True,
+                    ):
+                        st.session_state["landing_confirm_del"] = name
+                        st.rerun()
+                _, cancel_mid, _ = st.columns([1, 2, 1])
+                with cancel_mid:
+                    if st.button(
+                        "Cancel",
+                        key=f"room_cancel_{name}",
+                        use_container_width=True,
+                    ):
+                        st.session_state.pop("landing_selected_room", None)
+                        st.session_state.pop("landing_confirm_del", None)
+                        st.rerun()
+
+            else:
+                if st.button(
+                    name,
+                    key=f"room_pick_{name}",
+                    use_container_width=True,
+                ):
+                    st.session_state["landing_selected_room"] = name
+                    st.session_state.pop("landing_confirm_del", None)
+                    st.session_state.pop("creating_room", None)
+                    st.rerun()
+
+            st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown('<div style="height:0.5rem"></div>', unsafe_allow_html=True)
 
     favorites = db.list_favorites()
     if favorites:
@@ -241,8 +297,8 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
                         st.session_state[rename_key] = i
                         st.rerun()
                 with remove_c:
-                    if st.button(
-                        "Remove",
+                    if danger_button(
+                        "Delete",
                         use_container_width=True,
                         key=f"setup_rm_{room_name}_{i}_{name}",
                     ):
