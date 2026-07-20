@@ -110,6 +110,44 @@ h1 {
   text-align: center;
 }
 
+.qg-number-with-fav {
+  text-align: right;
+  margin: 0.15rem 0 0.35rem 0;
+  line-height: 1.75rem;
+}
+
+.qg-fav-mark {
+  display: none;
+}
+
+/* Compact star beside question number */
+div[data-testid="element-container"]:has(.qg-fav-mark)
+  + div[data-testid="element-container"]
+  button,
+div[data-testid="stElementContainer"]:has(.qg-fav-mark)
+  + div[data-testid="stElementContainer"]
+  button {
+  min-height: 1.75rem !important;
+  height: 1.75rem !important;
+  padding: 0 !important;
+  font-size: 1.15rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #9bb5a6 !important;
+}
+
+div[data-testid="element-container"]:has(.qg-fav-mark.qg-fav-on)
+  + div[data-testid="element-container"]
+  button,
+div[data-testid="stElementContainer"]:has(.qg-fav-mark.qg-fav-on)
+  + div[data-testid="stElementContainer"]
+  button {
+  color: #c4a4a8 !important;
+}
+
 .qg-question {
   font-family: 'Fraunces', Georgia, serif;
   font-size: 1.55rem;

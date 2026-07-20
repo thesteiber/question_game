@@ -580,18 +580,42 @@ def _render_question_card(
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        f'<div class="qg-number">Question {question["number"]}</div>',
-        unsafe_allow_html=True,
-    )
+    favorited = db.is_favorited(question["text"])
+    fav_label = "★" if favorited else "☆"
+    fav_class = "qg-fav-on" if favorited else "qg-fav-off"
+
+    _, num_mid, _ = st.columns([1, 2.4, 1])
+    with num_mid:
+        num_col, star_col = st.columns([5, 1], gap="small")
+        with num_col:
+            st.markdown(
+                f'<div class="qg-number qg-number-with-fav">'
+                f'Question {question["number"]}</div>',
+                unsafe_allow_html=True,
+            )
+        with star_col:
+            st.markdown(
+                f'<div class="qg-fav-mark {fav_class}"></div>',
+                unsafe_allow_html=True,
+            )
+            if st.button(
+                fav_label,
+                key=f"fav_{room_name}_{question['number']}",
+                use_container_width=True,
+                help="Favorite",
+            ):
+                db.toggle_favorite(
+                    question["text"],
+                    room_name=room_name,
+                    source_number=question["number"],
+                )
+                st.rerun()
+
     st.markdown(
         f'<div class="qg-question">{html.escape(question["text"])}</div>',
         unsafe_allow_html=True,
     )
     progress_bar(len(remaining), total)
-
-    favorited = db.is_favorited(question["text"])
-    fav_label = "★" if favorited else "☆"
 
     left, mid, right = st.columns([1, 2, 1])
     with mid:
@@ -616,14 +640,6 @@ def _render_question_card(
     ):
         db.set_current_question(room_name, None)
         st.session_state.pop("just_rolled", None)
-        st.rerun()
-
-    if st.button(fav_label, use_container_width=True):
-        db.toggle_favorite(
-            question["text"],
-            room_name=room_name,
-            source_number=question["number"],
-        )
         st.rerun()
 
 
