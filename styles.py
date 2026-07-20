@@ -381,14 +381,59 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
 
 .stSlider { padding-top: 0.25rem; padding-bottom: 0.5rem; }
 
+.qg-setup-header {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #2c3a34;
+  text-align: center;
+  margin: 1.25rem 0 0.75rem 0;
+  letter-spacing: -0.02em;
+}
+
+.qg-player-row {
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(44, 58, 52, 0.1);
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  text-align: center;
+  font-weight: 700;
+  color: #2c3a34;
+  margin-bottom: 0.15rem;
+}
+
+.qg-mode-toggles {
+  margin: 0.35rem 0 0.85rem 0;
+}
+
+div[data-testid="stToggle"] {
+  display: flex;
+  justify-content: center;
+  padding: 0.35rem 0;
+}
+
 div[data-testid="stSlider"] {
   padding-left: 1.15rem !important;
   padding-right: 1.15rem !important;
 }
 
-.qg-slider-wrap {
-  padding-left: 0;
-  padding-right: 0;
+/* Bigger, softer slider thumb */
+div[data-baseweb="slider"] [role="slider"] {
+  width: 1.55rem !important;
+  height: 1.55rem !important;
+  background-color: #7d9b8a !important;
+  border: 3px solid #fff8f1 !important;
+  box-shadow: 0 2px 8px rgba(44, 58, 52, 0.22) !important;
+}
+
+div[data-baseweb="slider"] div[data-testid="stThumbValue"] {
+  font-weight: 700;
+}
+
+/* Track polish */
+div[data-baseweb="slider"] > div > div {
+  height: 8px !important;
+  border-radius: 999px !important;
 }
 
 .qg-rooms-block {

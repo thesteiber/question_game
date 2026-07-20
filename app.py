@@ -168,20 +168,70 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
     brand_header(f'<strong>{html.escape(room_name)}</strong>')
     settings = room.get("settings") or {}
 
-    st.markdown("##### Players")
-    existing = room.get("players") or ["", ""]
-    while len(existing) < 2:
-        existing.append("")
-    p1 = st.text_input("Player 1", value=existing[0], placeholder="Name")
-    p2 = st.text_input("Player 2", value=existing[1], placeholder="Name")
-    extra = st.text_input(
-        "More players",
-        value=", ".join(existing[2:]) if len(existing) > 2 else "",
-        placeholder="comma-separated",
-    )
+    players_key = f"setup_players_{room_name}"
+    add_mode_key = f"setup_adding_{room_name}"
+    wyr_key = f"setup_wyr_{room_name}"
+    nhie_key = f"setup_nhie_{room_name}"
 
-    st.markdown("##### Vibe")
-    st.markdown('<div class="qg-slider-wrap">', unsafe_allow_html=True)
+    if players_key not in st.session_state:
+        st.session_state[players_key] = [p for p in (room.get("players") or []) if p]
+    if wyr_key not in st.session_state:
+        st.session_state[wyr_key] = bool(settings.get("would_you_rather", False))
+        # Exclusive: prefer WYR if both somehow set
+        st.session_state[nhie_key] = (
+            bool(settings.get("never_have_i_ever", False)) and not st.session_state[wyr_key]
+        )
+
+    st.markdown('<p class="qg-setup-header">Players</p>', unsafe_allow_html=True)
+    players: list[str] = list(st.session_state[players_key])
+
+    if players:
+        for i, name in enumerate(players):
+            name_col, rm_col = st.columns([5, 1])
+            with name_col:
+                st.markdown(
+                    f'<div class="qg-player-row">{html.escape(name)}</div>',
+                    unsafe_allow_html=True,
+                )
+            with rm_col:
+                if st.button("✕", key=f"setup_rm_{room_name}_{i}_{name}", use_container_width=True):
+                    players.pop(i)
+                    st.session_state[players_key] = players
+                    st.rerun()
+
+    if st.session_state.get(add_mode_key):
+        st.markdown('<p class="qg-options-title">New player</p>', unsafe_allow_html=True)
+        new_name = st.text_input(
+            "Name",
+            key=f"setup_new_player_{room_name}",
+            placeholder="Name",
+            label_visibility="collapsed",
+        )
+        add_c, cancel_c = st.columns(2)
+        with add_c:
+            if st.button("Add", type="primary", use_container_width=True, key=f"setup_add_go_{room_name}"):
+                cleaned = " ".join(new_name.strip().split())
+                if not cleaned:
+                    st.warning("Enter a name.")
+                elif any(cleaned.lower() == p.lower() for p in players):
+                    st.warning("Already added.")
+                else:
+                    players.append(cleaned)
+                    st.session_state[players_key] = players
+                    st.session_state[add_mode_key] = False
+                    st.rerun()
+        with cancel_c:
+            if st.button("Cancel", use_container_width=True, key=f"setup_add_cancel_{room_name}"):
+                st.session_state[add_mode_key] = False
+                st.rerun()
+    else:
+        _, add_mid, _ = st.columns([1, 2, 1])
+        with add_mid:
+            if st.button("Add Player", use_container_width=True, key=f"setup_add_btn_{room_name}"):
+                st.session_state[add_mode_key] = True
+                st.rerun()
+
+    st.markdown('<p class="qg-setup-header">Vibe</p>', unsafe_allow_html=True)
     coupleyness = st.slider(
         "Coupley-ness",
         min_value=0,
@@ -200,21 +250,35 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
         max_value=200,
         value=int(settings.get("raunch", 0)),
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
-    would_you_rather = st.checkbox(
-        "Would You Rather",
-        value=bool(settings.get("would_you_rather", False)),
-    )
-    never_have_i_ever = st.checkbox(
-        "Never Have I Ever",
-        value=bool(settings.get("never_have_i_ever", False)),
-    )
+    def _on_wyr() -> None:
+        if st.session_state.get(wyr_key):
+            st.session_state[nhie_key] = False
+
+    def _on_nhie() -> None:
+        if st.session_state.get(nhie_key):
+            st.session_state[wyr_key] = False
+
+    st.markdown('<div class="qg-mode-toggles">', unsafe_allow_html=True)
+    mode_l, mode_r = st.columns(2)
+    with mode_l:
+        would_you_rather = st.toggle(
+            "Would You Rather",
+            key=wyr_key,
+            on_change=_on_wyr,
+        )
+    with mode_r:
+        never_have_i_ever = st.toggle(
+            "Never Have I Ever",
+            key=nhie_key,
+            on_change=_on_nhie,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
 
     vibe = st.text_area(
         "Notes",
         value=settings.get("vibe", ""),
-        placeholder="e.g. playful, late-night, less about the future…",
+        placeholder="optional question customization",
         height=80,
         label_visibility="collapsed",
     )
@@ -227,13 +291,12 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
     with leave_col:
         if st.button("Leave room", use_container_width=True):
             st.session_state.pop("room_name", None)
+            st.session_state.pop(players_key, None)
+            st.session_state.pop(add_mode_key, None)
             st.rerun()
     with start_col:
         if st.button("Start Game", type="primary", use_container_width=True, disabled=not api_key):
-            players = [p1.strip(), p2.strip()]
-            if extra.strip():
-                players.extend([p.strip() for p in extra.split(",") if p.strip()])
-            players = [p for p in players if p]
+            players = [p for p in st.session_state.get(players_key, []) if p]
             if len(players) < 2:
                 st.error("Need at least two players.")
                 return
@@ -242,8 +305,8 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
             next_settings["coupleyness"] = coupleyness
             next_settings["funness"] = funness
             next_settings["raunch"] = raunch
-            next_settings["would_you_rather"] = would_you_rather
-            next_settings["never_have_i_ever"] = never_have_i_ever
+            next_settings["would_you_rather"] = bool(would_you_rather)
+            next_settings["never_have_i_ever"] = bool(never_have_i_ever)
             next_settings["vibe"] = vibe
             db.save_room(room_name, players=players, settings=next_settings)
 
@@ -255,11 +318,13 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
                         vibe=vibe,
                         funness=funness,
                         raunch=raunch,
-                        would_you_rather=would_you_rather,
-                        never_have_i_ever=never_have_i_ever,
+                        would_you_rather=bool(would_you_rather),
+                        never_have_i_ever=bool(never_have_i_ever),
                         model=get_model(),
                     )
                     db.replace_questions(room_name, questions)
+                    st.session_state.pop(players_key, None)
+                    st.session_state.pop(add_mode_key, None)
                     st.rerun()
                 except Exception:
                     st.error("Could not generate questions.")

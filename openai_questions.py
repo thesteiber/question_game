@@ -132,11 +132,6 @@ def _style_for_raunch(raunch: int) -> str:
 
 
 def _format_modes(would_you_rather: bool, never_have_i_ever: bool) -> str:
-    if would_you_rather and never_have_i_ever:
-        return (
-            "Format mix: about half should be 'Would you rather…?' questions, and about "
-            "half should be 'Never have I ever…' prompts. Phrase them naturally in those forms."
-        )
     if would_you_rather:
         return (
             "Format: every question must be a 'Would you rather…?' with two clear, "
@@ -151,7 +146,6 @@ def _format_modes(would_you_rather: bool, never_have_i_ever: bool) -> str:
         "Format: open conversation questions (not forced into Would You Rather or "
         "Never Have I Ever unless it fits naturally)."
     )
-
 
 def build_prompt(
     coupleyness: int,
