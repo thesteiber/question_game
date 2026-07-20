@@ -67,6 +67,7 @@ class GameDB:
                 );
                 """
             )
+            _migrate_room_names_to_upper(conn)
 
     def list_rooms(self) -> list[dict[str, Any]]:
         with self._connect() as conn:
@@ -122,13 +123,50 @@ class GameDB:
         self.save_room(room_name, players=players)
         return True
 
+    def remove_player(self, room_name: str, player_name: str) -> bool:
+        """Remove a player. Keeps the active question; if it was their turn, assign to next."""
+        name = " ".join(player_name.strip().split())
+        room = self.ensure_room(room_name)
+        players = list(room["players"])
+        if len(players) <= 1:
+            return False
+
+        remove_idx = next((i for i, p in enumerate(players) if p.lower() == name.lower()), None)
+        if remove_idx is None:
+            return False
+
+        settings = dict(room["settings"])
+        current_idx = int(settings.get("current_player_index", 0)) % max(len(players), 1)
+
+        players.pop(remove_idx)
+
+        if not players:
+            return False
+
+        if remove_idx < current_idx:
+            current_idx -= 1
+        elif remove_idx == current_idx:
+            # Same index now points at who was next; wrap if we removed the last seat.
+            if current_idx >= len(players):
+                current_idx = 0
+        # else: removed someone after current — index unchanged
+
+        settings["current_player_index"] = current_idx % len(players)
+        # Keep current_question_number as-is so the active question stays on screen.
+        self.save_room(room_name, players=players, settings=settings)
+        return True
+
     def ensure_room(self, room_name: str) -> dict[str, Any]:
         existing = self.get_room(room_name)
         if existing:
             return existing
         key = _normalize_room(room_name)
         settings = {
-            "coupleyness": 100,
+            "coupleyness": 0,
+            "funness": 0,
+            "raunch": 0,
+            "would_you_rather": False,
+            "never_have_i_ever": False,
             "vibe": "",
             "current_player_index": 0,
             "current_question_number": None,
@@ -162,8 +200,8 @@ class GameDB:
     def replace_questions(self, room_name: str, questions: list[str]) -> None:
         room = self.ensure_room(room_name)
         key = room["room_name"]
-        if len(questions) != 50:
-            raise ValueError("Expected exactly 50 questions")
+        if len(questions) != 55:
+            raise ValueError("Expected exactly 55 questions")
         with self._connect() as conn:
             conn.execute("DELETE FROM questions WHERE room_name = ?", (key,))
             conn.executemany(
@@ -287,6 +325,7 @@ class GameDB:
             chosen = random.choice(remaining)
             settings["current_question_number"] = chosen["number"]
             settings["phase"] = "play"
+            settings.pop("last_dice", None)
             conn.execute(
                 "UPDATE rooms SET settings = ?, updated_at = ? WHERE room_name = ?",
                 (json.dumps(settings), _utc_now(), key),
@@ -296,6 +335,81 @@ class GameDB:
                 "text": chosen["text"],
                 "answered": bool(chosen["answered"]),
                 "answered_by": chosen["answered_by"],
+            }
+
+    def get_active_question(self, room_name: str) -> dict[str, Any] | None:
+        """Return the currently claimed unanswered question, if any."""
+        room = self.get_room(room_name)
+        if not room:
+            return None
+        current = room["settings"].get("current_question_number")
+        if current is None:
+            return None
+        q = self.get_question(room_name, int(current))
+        if q and not q["answered"]:
+            return q
+        return None
+
+    def claim_question_number(
+        self,
+        room_name: str,
+        number: int,
+        *,
+        dice: dict[str, int] | None = None,
+    ) -> dict[str, Any] | None:
+        """Claim a specific remaining question (used after a dice roll)."""
+        key = _normalize_room(room_name)
+        with self._connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT settings FROM rooms WHERE room_name = ?",
+                (key,),
+            ).fetchone()
+            if not row:
+                return None
+            settings = json.loads(row["settings"])
+            current = settings.get("current_question_number")
+            if current is not None:
+                qrow = conn.execute(
+                    """
+                    SELECT number, text, answered, answered_by
+                    FROM questions
+                    WHERE room_name = ? AND number = ? AND answered = 0
+                    """,
+                    (key, int(current)),
+                ).fetchone()
+                if qrow:
+                    return {
+                        "number": qrow["number"],
+                        "text": qrow["text"],
+                        "answered": bool(qrow["answered"]),
+                        "answered_by": qrow["answered_by"],
+                    }
+
+            qrow = conn.execute(
+                """
+                SELECT number, text, answered, answered_by
+                FROM questions
+                WHERE room_name = ? AND number = ? AND answered = 0
+                """,
+                (key, int(number)),
+            ).fetchone()
+            if not qrow:
+                return None
+
+            settings["current_question_number"] = int(number)
+            settings["phase"] = "play"
+            if dice:
+                settings["last_dice"] = dice
+            conn.execute(
+                "UPDATE rooms SET settings = ?, updated_at = ? WHERE room_name = ?",
+                (json.dumps(settings), _utc_now(), key),
+            )
+            return {
+                "number": qrow["number"],
+                "text": qrow["text"],
+                "answered": bool(qrow["answered"]),
+                "answered_by": qrow["answered_by"],
             }
 
     def mark_answered(self, room_name: str, number: int, answered_by: str) -> None:
@@ -372,6 +486,18 @@ class GameDB:
         with self._connect() as conn:
             conn.execute("DELETE FROM favorites WHERE id = ?", (favorite_id,))
 
+    def remove_favorite_text(self, question_text: str) -> bool:
+        """Remove a favorite by question text. Returns True if something was removed."""
+        text = " ".join(question_text.strip().split())
+        if not text:
+            return False
+        with self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM favorites WHERE question_text = ?",
+                (text,),
+            )
+            return cur.rowcount > 0
+
     def is_favorited(self, question_text: str) -> bool:
         text = " ".join(question_text.strip().split())
         with self._connect() as conn:
@@ -380,6 +506,24 @@ class GameDB:
                 (text,),
             ).fetchone()
         return row is not None
+
+    def toggle_favorite(
+        self,
+        question_text: str,
+        *,
+        room_name: str | None = None,
+        source_number: int | None = None,
+    ) -> bool:
+        """Favorite if not saved; unfavorite if already saved. Returns new favorited state."""
+        if self.is_favorited(question_text):
+            self.remove_favorite_text(question_text)
+            return False
+        self.add_favorite(
+            question_text,
+            room_name=room_name,
+            source_number=source_number,
+        )
+        return True
 
     def list_favorites(self) -> list[dict[str, Any]]:
         with self._connect() as conn:
@@ -432,7 +576,36 @@ class GameDB:
 
 
 def _normalize_room(room_name: str) -> str:
-    return " ".join(room_name.strip().lower().split())
+    return " ".join(room_name.strip().upper().split())
+
+
+def _migrate_room_names_to_upper(conn: sqlite3.Connection) -> None:
+    """Rewrite legacy lowercase room keys to uppercase."""
+    rows = conn.execute("SELECT room_name FROM rooms").fetchall()
+    for row in rows:
+        old = row["room_name"]
+        new = _normalize_room(old)
+        if old == new:
+            continue
+        clash = conn.execute(
+            "SELECT 1 FROM rooms WHERE room_name = ?", (new,)
+        ).fetchone()
+        if clash:
+            continue
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            "UPDATE rooms SET room_name = ? WHERE room_name = ?",
+            (new, old),
+        )
+        conn.execute(
+            "UPDATE questions SET room_name = ? WHERE room_name = ?",
+            (new, old),
+        )
+        conn.execute(
+            "UPDATE favorites SET room_name = ? WHERE room_name = ?",
+            (new, old),
+        )
+        conn.execute("PRAGMA foreign_keys = ON")
 
 
 def _room_from_row(row: sqlite3.Row) -> dict[str, Any]:
