@@ -122,6 +122,39 @@ class GameDB:
         self.save_room(room_name, players=players)
         return True
 
+    def remove_player(self, room_name: str, player_name: str) -> bool:
+        """Remove a player. Keeps the active question; if it was their turn, assign to next."""
+        name = " ".join(player_name.strip().split())
+        room = self.ensure_room(room_name)
+        players = list(room["players"])
+        if len(players) <= 1:
+            return False
+
+        remove_idx = next((i for i, p in enumerate(players) if p.lower() == name.lower()), None)
+        if remove_idx is None:
+            return False
+
+        settings = dict(room["settings"])
+        current_idx = int(settings.get("current_player_index", 0)) % max(len(players), 1)
+
+        players.pop(remove_idx)
+
+        if not players:
+            return False
+
+        if remove_idx < current_idx:
+            current_idx -= 1
+        elif remove_idx == current_idx:
+            # Same index now points at who was next; wrap if we removed the last seat.
+            if current_idx >= len(players):
+                current_idx = 0
+        # else: removed someone after current — index unchanged
+
+        settings["current_player_index"] = current_idx % len(players)
+        # Keep current_question_number as-is so the active question stays on screen.
+        self.save_room(room_name, players=players, settings=settings)
+        return True
+
     def ensure_room(self, room_name: str) -> dict[str, Any]:
         existing = self.get_room(room_name)
         if existing:

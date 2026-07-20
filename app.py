@@ -391,7 +391,7 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
             if st.button("New bank", type="primary", use_container_width=True):
                 db.clear_questions(room_name)
                 st.rerun()
-        _answered_expander(answered)
+        _answered_expander(answered, db=db, room_name=room_name)
         return
 
     question = db.get_active_question(room_name)
@@ -405,31 +405,107 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
         _render_question_card(db, room_name, room, question, remaining, total)
 
     with st.expander("Options"):
-        with st.form("add_player_form", clear_on_submit=True):
-            new_player = st.text_input("Add player", placeholder="Name", label_visibility="collapsed")
-            if st.form_submit_button("Add player"):
-                if db.add_player(room_name, new_player):
+        _render_options_panel(db, room_name, player_names)
+
+    _answered_expander(answered, db=db, room_name=room_name)
+
+
+def _options_mode_key(room_name: str) -> str:
+    return f"options_mode_{room_name}"
+
+
+def _render_options_panel(db: GameDB, room_name: str, player_names: list[str]) -> None:
+    mode_key = _options_mode_key(room_name)
+    mode = st.session_state.get(mode_key)
+
+    st.markdown('<div class="qg-options">', unsafe_allow_html=True)
+
+    if mode == "add":
+        st.markdown('<p class="qg-options-title">Add player</p>', unsafe_allow_html=True)
+        new_name = st.text_input(
+            "Name",
+            key=f"add_player_input_{room_name}",
+            placeholder="Name",
+            label_visibility="collapsed",
+        )
+        confirm, cancel = st.columns(2)
+        with confirm:
+            if st.button("Add", type="primary", use_container_width=True, key=f"add_confirm_{room_name}"):
+                if db.add_player(room_name, new_name):
+                    st.session_state.pop(mode_key, None)
                     st.rerun()
-        if st.button("New question bank"):
+                else:
+                    st.warning("Need a new name.")
+        with cancel:
+            if st.button("Cancel", use_container_width=True, key=f"add_cancel_{room_name}"):
+                st.session_state.pop(mode_key, None)
+                st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+        return
+
+    if mode == "remove":
+        st.markdown('<p class="qg-options-title">Remove player</p>', unsafe_allow_html=True)
+        if len(player_names) <= 1:
+            st.caption("Need at least one player.")
+        else:
+            for name in player_names:
+                if st.button(
+                    name,
+                    key=f"remove_pick_{room_name}_{name}",
+                    use_container_width=True,
+                ):
+                    if db.remove_player(room_name, name):
+                        st.session_state.pop(mode_key, None)
+                        st.rerun()
+        if st.button("Cancel", use_container_width=True, key=f"remove_cancel_{room_name}"):
+            st.session_state.pop(mode_key, None)
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+        return
+
+    row1_a, row1_b = st.columns(2)
+    with row1_a:
+        if st.button("Add player", use_container_width=True, key=f"opt_add_{room_name}"):
+            st.session_state[mode_key] = "add"
+            st.rerun()
+    with row1_b:
+        if st.button("Remove player", use_container_width=True, key=f"opt_remove_{room_name}"):
+            st.session_state[mode_key] = "remove"
+            st.rerun()
+
+    row2_a, row2_b = st.columns(2)
+    with row2_a:
+        if st.button("New bank", use_container_width=True, key=f"opt_bank_{room_name}"):
             db.clear_questions(room_name)
             st.session_state.pop("just_rolled", None)
+            st.session_state.pop(mode_key, None)
             st.rerun()
-        if st.button("Reset progress"):
+    with row2_b:
+        if st.button("Reset", use_container_width=True, key=f"opt_reset_{room_name}"):
             db.reset_progress(room_name)
             st.session_state.pop("just_rolled", None)
+            st.session_state.pop(mode_key, None)
             st.rerun()
-        if st.button("Leave room"):
+
+    leave_l, leave_m, leave_r = st.columns([1, 2, 1])
+    with leave_m:
+        if st.button("Leave room", use_container_width=True, key=f"opt_leave_{room_name}"):
             st.session_state.pop("room_name", None)
             st.session_state.pop("just_rolled", None)
+            st.session_state.pop(mode_key, None)
             st.rerun()
 
-    _answered_expander(answered)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
-def _answered_expander(answered: list[dict]) -> None:
+def _answered_expander(
+    answered: list[dict],
+    db: GameDB | None = None,
+    room_name: str | None = None,
+) -> None:
     if not answered:
         return
-    with st.expander(f"Done ({len(answered)})"):
+    with st.expander(f"Completed Questions ({len(answered)})"):
         for q in answered:
             if q.get("answered_by") == "skipped":
                 who = " — skipped"
@@ -437,7 +513,26 @@ def _answered_expander(answered: list[dict]) -> None:
                 who = f" — {html.escape(q['answered_by'])}"
             else:
                 who = ""
-            st.markdown(f"~~{q['number']}. {html.escape(q['text'])}~~{who}")
+            cols = st.columns([5, 1])
+            with cols[0]:
+                st.markdown(f"~~{q['number']}. {html.escape(q['text'])}~~{who}")
+            with cols[1]:
+                if db is None:
+                    continue
+                favorited = db.is_favorited(q["text"])
+                label = "★" if favorited else "☆"
+                if st.button(
+                    label,
+                    key=f"fav_done_{room_name}_{q['number']}",
+                    disabled=favorited,
+                    use_container_width=True,
+                ):
+                    db.add_favorite(
+                        q["text"],
+                        room_name=room_name,
+                        source_number=q["number"],
+                    )
+                    st.rerun()
 
 
 def main() -> None:

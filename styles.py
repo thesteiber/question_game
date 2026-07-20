@@ -177,14 +177,15 @@ h1 {
   margin: 0 0 1rem 0;
 }
 
-.qg-section-label {
+.qg-options {
+  padding: 0.35rem 0 0.15rem;
+}
+
+.qg-options-title {
   text-align: center;
-  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #6b6258;
-  margin: 1.35rem 0 0.75rem 0;
+  color: #1a2e2a;
+  margin: 0.15rem 0 0.65rem 0;
 }
 
 .qg-landing-mark {
