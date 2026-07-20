@@ -555,26 +555,30 @@ def _render_roll_screen(db: GameDB, room_name: str, room: dict, remaining: list[
         )
 
     st.markdown(idle_dice_html(), unsafe_allow_html=True)
+    st.markdown(
+        '<p class="qg-roll-prompt">Rolling…</p>',
+        unsafe_allow_html=True,
+    )
 
-    left, mid, right = st.columns([1, 2, 1])
-    with mid:
-        if st.button("Roll", type="primary", use_container_width=True):
-            result = roll_until_valid({q["number"] for q in remaining})
-            claimed = db.claim_question_number(
-                room_name,
-                result.number,
-                dice={"tens": result.tens, "ones": result.ones, "attempts": result.attempts},
-            )
-            if claimed:
-                st.session_state["just_rolled"] = {
-                    "room": room_name,
-                    "tens": result.tens,
-                    "ones": result.ones,
-                    "attempts": result.attempts,
-                    "number": result.number,
-                    "started_at": time.time(),
-                }
-            st.rerun()
+    result = roll_until_valid({q["number"] for q in remaining})
+    claimed = db.claim_question_number(
+        room_name,
+        result.number,
+        dice={"tens": result.tens, "ones": result.ones, "attempts": result.attempts},
+    )
+    if not claimed:
+        return
+
+    if claimed["number"] == result.number:
+        st.session_state["just_rolled"] = {
+            "room": room_name,
+            "tens": result.tens,
+            "ones": result.ones,
+            "attempts": result.attempts,
+            "number": result.number,
+            "started_at": time.time(),
+        }
+    st.rerun()
 
 
 def _render_question_card(
