@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import time
 from datetime import timedelta
 
 import streamlit as st
@@ -20,6 +21,8 @@ st.set_page_config(
 )
 
 st.markdown(f"<style>{APP_CSS}</style>", unsafe_allow_html=True)
+
+DICE_REVEAL_SECONDS = 1.7
 
 
 def get_db() -> GameDB:
@@ -231,6 +234,7 @@ def _render_roll_screen(db: GameDB, room_name: str, room: dict, remaining: list[
                     "ones": result.ones,
                     "attempts": result.attempts,
                     "number": result.number,
+                    "started_at": time.time(),
                 }
             st.rerun()
 
@@ -245,10 +249,17 @@ def _render_question_card(
 ) -> None:
     player = current_player(room)
     just = st.session_state.get("just_rolled")
-    show_anim = (
+    rolling = (
         isinstance(just, dict)
         and just.get("room") == room_name
         and just.get("number") == question["number"]
+        and not just.get("revealed")
+    )
+    finishing = (
+        isinstance(just, dict)
+        and just.get("room") == room_name
+        and just.get("number") == question["number"]
+        and just.get("revealed")
     )
 
     if player:
@@ -257,7 +268,8 @@ def _render_question_card(
             unsafe_allow_html=True,
         )
 
-    if show_anim:
+    # Phase 1: dice only — question waits until the tumble finishes.
+    if rolling:
         render_dice_roll(
             DiceResult(
                 tens=int(just["tens"]),
@@ -266,21 +278,41 @@ def _render_question_card(
                 attempts=int(just.get("attempts", 1)),
             )
         )
-        # Clear so refreshes / second phone don't replay the roll.
+
+        @st.fragment(run_every=timedelta(milliseconds=250))
+        def _reveal_after_roll() -> None:
+            jr = st.session_state.get("just_rolled")
+            if not (
+                isinstance(jr, dict)
+                and jr.get("room") == room_name
+                and jr.get("number") == question["number"]
+                and not jr.get("revealed")
+            ):
+                return
+            started = float(jr.get("started_at") or 0)
+            if time.time() - started < DICE_REVEAL_SECONDS:
+                return
+            st.session_state["just_rolled"] = {**jr, "revealed": True}
+            st.rerun()
+
+        _reveal_after_roll()
+        return
+
+    if finishing:
         st.session_state.pop("just_rolled", None)
-    else:
-        last = room["settings"].get("last_dice") or {}
-        tens = last.get("tens", question["number"] // 10)
-        ones = last.get("ones", question["number"] % 10)
-        st.markdown(
-            f"""
-            <div class="qg-dice-stage">
-              <div class="qg-die qg-dice-static"><span class="qg-die-face">{int(tens)}</span></div>
-              <div class="qg-die qg-dice-static"><span class="qg-die-face">{int(ones)}</span></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+
+    last = room["settings"].get("last_dice") or {}
+    tens = last.get("tens", question["number"] // 10)
+    ones = last.get("ones", question["number"] % 10)
+    st.markdown(
+        f"""
+        <div class="qg-dice-stage">
+          <div class="qg-die qg-dice-static"><span class="qg-die-face">{int(tens)}</span></div>
+          <div class="qg-die qg-dice-static"><span class="qg-die-face">{int(ones)}</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         f'<div class="qg-number">Question {question["number"]}</div>',
@@ -415,6 +447,17 @@ def main() -> None:
 
     if not has_questions or phase == "setup":
         render_setup(db, room_name, room)
+        return
+
+    # During a local dice roll, skip the 2s poll so it doesn't interrupt the animation.
+    just = st.session_state.get("just_rolled")
+    rolling = (
+        isinstance(just, dict)
+        and just.get("room") == room_name
+        and not just.get("revealed")
+    )
+    if rolling:
+        render_play(db, room_name, room)
         return
 
     # Auto-refresh so a second phone picks up rolls / next turn.

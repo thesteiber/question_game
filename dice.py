@@ -81,12 +81,15 @@ def render_dice_roll(result: DiceResult) -> None:
   }}
   .result {{
     text-align: center;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: #1a2e2a;
-    margin: 0.55rem 0 0;
+    margin: 0.65rem 0 0;
     opacity: 0;
     animation: pop 0.35s ease-out 1.35s forwards;
+  }}
+  .spacer {{
+    height: 0.5rem;
   }}
   @keyframes tumble {{
     0%   {{ transform: translateY(-30px) rotate(-20deg) scale(0.85); }}
@@ -107,11 +110,12 @@ def render_dice_roll(result: DiceResult) -> None:
     <div class="die"><span class="face" id="d0">?</span></div>
     <div class="die"><span class="face" id="d1">?</span></div>
   </div>
-  <p class="result">Question <strong>{result.tens}{result.ones:d}</strong></p>
+  <p class="result"><strong>{result.tens}{result.ones:d}</strong></p>
+  <div class="spacer"></div>
 <script>
   const finals = [{result.tens}, {result.ones}];
   const faces = [document.getElementById('d0'), document.getElementById('d1')];
-  const duration = 1200;
+  const duration = 1300;
   const start = performance.now();
 
   function tick(now) {{
@@ -130,7 +134,7 @@ def render_dice_roll(result: DiceResult) -> None:
 </body>
 </html>
         """,
-        height=170,
+        height=160,
         scrolling=False,
     )
 
