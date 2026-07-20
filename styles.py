@@ -357,17 +357,17 @@ div.stButton > button:active {
   transform: translateY(2px);
 }
 
-/* Pastel-red danger buttons (Delete / Remove / Reset / Skip) */
+/* Dusty-rose danger buttons (Delete / Remove / Reset / Skip) */
 div[data-testid="element-container"]:has(.qg-btn-danger-mark)
   + div[data-testid="element-container"]
   button,
 div[data-testid="stElementContainer"]:has(.qg-btn-danger-mark)
   + div[data-testid="stElementContainer"]
   button {
-  background: linear-gradient(135deg, #e8b4b8, #f0c8cb) !important;
-  color: #6b3a3e !important;
-  border: 1px solid rgba(180, 110, 120, 0.35) !important;
-  box-shadow: 0 5px 0 #c9959a !important;
+  background: linear-gradient(135deg, #c4a4a8, #d4b8bb) !important;
+  color: #5c3d42 !important;
+  border: 1px solid rgba(140, 100, 108, 0.28) !important;
+  box-shadow: 0 5px 0 #9e7f84 !important;
 }
 
 /* Landing form: center the enter button */
