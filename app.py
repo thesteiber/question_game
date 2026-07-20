@@ -228,7 +228,7 @@ def render_room_gate() -> None:
 
 
 def render_setup(db: GameDB, room_name: str, room: dict) -> None:
-    brand_header(f'<strong>{html.escape(room_name)}</strong>')
+    brand_header()
     settings = room.get("settings") or {}
 
     players_key = f"setup_players_{room_name}"
@@ -622,14 +622,7 @@ def render_play(db: GameDB, room_name: str, room: dict) -> None:
     total = db.question_count(room_name)
     player_names = room.get("players") or []
 
-    brand_header(f'<strong>{html.escape(room_name)}</strong>')
-    chips = '<div class="qg-chip-row">'
-    for name in player_names[:4]:
-        chips += f'<span class="qg-chip">{html.escape(name)}</span>'
-    if len(player_names) > 4:
-        chips += f'<span class="qg-chip">+{len(player_names) - 4}</span>'
-    chips += "</div>"
-    st.markdown(chips, unsafe_allow_html=True)
+    brand_header()
 
     if not remaining and room["settings"].get("phase") == "done":
         st.markdown(
