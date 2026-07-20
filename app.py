@@ -89,10 +89,15 @@ def render_room_gate() -> None:
     db = get_db()
     st.markdown('<p class="qg-brand">Question Game</p>', unsafe_allow_html=True)
     st.markdown('<p class="qg-subtitle">a game by Sydney &amp; Niko</p>', unsafe_allow_html=True)
+    st.markdown('<div class="qg-landing-mark">🎲</div>', unsafe_allow_html=True)
 
     with st.form("room_form"):
-        room = st.text_input("Room name", placeholder="sydniko", label_visibility="collapsed")
-        submitted = st.form_submit_button("Enter room", type="primary")
+        room = st.text_input(
+            "Room name",
+            placeholder="enter room name…",
+            label_visibility="collapsed",
+        )
+        submitted = st.form_submit_button("Enter", type="primary")
     if submitted:
         if not room.strip():
             st.error("Enter a room name.")
@@ -101,7 +106,8 @@ def render_room_gate() -> None:
 
     rooms = db.list_rooms()
     if rooms:
-        st.markdown("##### Rooms")
+        st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
+        st.markdown('<p class="qg-section-label">Rooms</p>', unsafe_allow_html=True)
         for room in rooms:
             name = room["room_name"]
             players = ", ".join(room["players"]) if room["players"] else "—"
@@ -109,31 +115,32 @@ def render_room_gate() -> None:
                 progress = f"{room['remaining']} left"
             else:
                 progress = "setup"
-            cols = st.columns([3, 1, 1])
-            with cols[0]:
-                st.markdown(
-                    f'<div class="qg-room-card"><strong>{html.escape(name)}</strong><br>'
-                    f'<span style="color:#6b6258;font-size:0.88rem">{html.escape(players)} · '
-                    f"{html.escape(progress)}</span></div>",
-                    unsafe_allow_html=True,
-                )
-            with cols[1]:
-                if st.button("Join", key=f"join_{name}"):
+            st.markdown('<div class="qg-room-row">', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="qg-room-card"><strong>{html.escape(name)}</strong>'
+                f'<div class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</div></div>',
+                unsafe_allow_html=True,
+            )
+            join_col, delete_col = st.columns(2, gap="small")
+            with join_col:
+                if st.button("Join", key=f"join_{name}", use_container_width=True, type="primary"):
                     enter_room(name)
-            with cols[2]:
+            with delete_col:
                 confirm_key = f"confirm_del_{name}"
                 if st.session_state.get(confirm_key):
-                    if st.button("Confirm", key=f"del_yes_{name}", type="primary"):
+                    if st.button("Confirm", key=f"del_yes_{name}", use_container_width=True):
                         db.delete_room(name)
                         st.session_state.pop(confirm_key, None)
                         st.rerun()
                 else:
-                    if st.button("Delete", key=f"del_{name}"):
+                    if st.button("Delete", key=f"del_{name}", use_container_width=True):
                         st.session_state[confirm_key] = True
                         st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
     favorites = db.list_favorites()
     if favorites:
+        st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
         with st.expander(f"Favorites ({len(favorites)})"):
             for fav in favorites:
                 st.markdown(f"• {html.escape(fav['question_text'])}")

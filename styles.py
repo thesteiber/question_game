@@ -155,9 +155,49 @@ h1 {
   background: rgba(255,255,255,0.78);
   border: 1px solid rgba(26, 46, 42, 0.08);
   border-radius: 16px;
-  padding: 0.85rem 0.95rem;
-  margin-bottom: 0.35rem;
+  padding: 0.95rem 1rem 0.85rem;
+  margin-bottom: 0.45rem;
   box-shadow: 0 4px 14px rgba(26, 46, 42, 0.05);
+  text-align: center;
+}
+
+.qg-room-card strong {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.15rem;
+  color: #1a2e2a;
+}
+
+.qg-room-meta {
+  color: #6b6258;
+  font-size: 0.88rem;
+  margin-top: 0.2rem;
+}
+
+.qg-room-row {
+  margin: 0 0 1rem 0;
+}
+
+.qg-section-label {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b6258;
+  margin: 1.35rem 0 0.75rem 0;
+}
+
+.qg-landing-mark {
+  text-align: center;
+  font-size: 2rem;
+  margin: 0.15rem 0 0.55rem 0;
+  opacity: 0.9;
+}
+
+.qg-landing-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(26,46,42,0.18), transparent);
+  margin: 0.35rem 0 0.2rem 0;
 }
 
 .qg-done {
@@ -301,10 +341,41 @@ div.stButton > button:active {
   transform: translateY(2px);
 }
 
-/* Forms / inputs */
+/* Landing form: center the enter button */
+div[data-testid="stForm"] {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+div[data-testid="stForm"] div.stFormSubmitButton {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.55rem;
+}
+
+div[data-testid="stForm"] div.stFormSubmitButton > button {
+  max-width: 14rem;
+}
+
+/* Room action row: keep Join / Delete side by side */
+.qg-room-row div[data-testid="stHorizontalBlock"] {
+  gap: 0.5rem;
+}
+
+.qg-room-row div.stButton > button {
+  min-height: 2.65rem !important;
+  font-size: 0.95rem !important;
+}
+
 .stTextInput input, .stTextArea textarea {
   border-radius: 12px !important;
   min-height: 2.85rem;
+  text-align: center;
+}
+
+.stTextInput input::placeholder {
+  text-align: center;
 }
 
 .stSlider { padding-top: 0.25rem; padding-bottom: 0.5rem; }
