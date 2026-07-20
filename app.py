@@ -182,24 +182,86 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
 
     st.markdown('<p class="qg-setup-header">Players</p>', unsafe_allow_html=True)
     players: list[str] = list(st.session_state[players_key])
+    selected_key = f"setup_selected_{room_name}"
+    rename_key = f"setup_renaming_{room_name}"
+    selected = st.session_state.get(selected_key)
+    renaming = st.session_state.get(rename_key)
 
     if players:
         for i, name in enumerate(players):
             st.markdown('<div class="qg-player-block">', unsafe_allow_html=True)
-            st.markdown(
-                f'<div class="qg-player-row">{html.escape(name)}</div>',
-                unsafe_allow_html=True,
-            )
-            _, rm_mid, _ = st.columns([1, 2, 1])
-            with rm_mid:
+
+            if renaming == i:
+                new_name = st.text_input(
+                    "Edit name",
+                    value=name,
+                    key=f"setup_rename_input_{room_name}_{i}",
+                    label_visibility="collapsed",
+                )
+                save_c, cancel_c = st.columns(2)
+                with save_c:
+                    if st.button(
+                        "Save",
+                        type="primary",
+                        use_container_width=True,
+                        key=f"setup_rename_save_{room_name}_{i}",
+                    ):
+                        cleaned = " ".join(new_name.strip().split())
+                        if not cleaned:
+                            st.warning("Enter a name.")
+                        elif any(
+                            cleaned.lower() == p.lower()
+                            for j, p in enumerate(players)
+                            if j != i
+                        ):
+                            st.warning("Already added.")
+                        else:
+                            players[i] = cleaned
+                            st.session_state[players_key] = players
+                            st.session_state[rename_key] = None
+                            st.session_state[selected_key] = None
+                            st.rerun()
+                with cancel_c:
+                    if st.button(
+                        "Cancel",
+                        use_container_width=True,
+                        key=f"setup_rename_cancel_{room_name}_{i}",
+                    ):
+                        st.session_state[rename_key] = None
+                        st.rerun()
+
+            elif selected == i:
+                edit_c, remove_c = st.columns(2)
+                with edit_c:
+                    if st.button(
+                        "Edit",
+                        use_container_width=True,
+                        key=f"setup_edit_{room_name}_{i}",
+                    ):
+                        st.session_state[rename_key] = i
+                        st.rerun()
+                with remove_c:
+                    if st.button(
+                        "Remove",
+                        use_container_width=True,
+                        key=f"setup_rm_{room_name}_{i}_{name}",
+                    ):
+                        players.pop(i)
+                        st.session_state[players_key] = players
+                        st.session_state[selected_key] = None
+                        st.session_state[rename_key] = None
+                        st.rerun()
+
+            else:
                 if st.button(
-                    "Remove",
-                    key=f"setup_rm_{room_name}_{i}_{name}",
+                    name,
                     use_container_width=True,
+                    key=f"setup_pick_{room_name}_{i}_{name}",
                 ):
-                    players.pop(i)
-                    st.session_state[players_key] = players
+                    st.session_state[selected_key] = i
+                    st.session_state[rename_key] = None
                     st.rerun()
+
             st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.get(add_mode_key):
@@ -222,6 +284,8 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
                     players.append(cleaned)
                     st.session_state[players_key] = players
                     st.session_state[add_mode_key] = False
+                    st.session_state[selected_key] = None
+                    st.session_state[rename_key] = None
                     st.rerun()
         with cancel_c:
             if st.button("Cancel", use_container_width=True, key=f"setup_add_cancel_{room_name}"):
@@ -232,6 +296,8 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
         with add_mid:
             if st.button("Add Player", use_container_width=True, key=f"setup_add_btn_{room_name}"):
                 st.session_state[add_mode_key] = True
+                st.session_state[selected_key] = None
+                st.session_state[rename_key] = None
                 st.rerun()
 
     st.markdown('<p class="qg-setup-header">Vibe</p>', unsafe_allow_html=True)
