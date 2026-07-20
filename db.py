@@ -67,6 +67,7 @@ class GameDB:
                 );
                 """
             )
+            _migrate_room_names_to_upper(conn)
 
     def list_rooms(self) -> list[dict[str, Any]]:
         with self._connect() as conn:
@@ -545,7 +546,36 @@ class GameDB:
 
 
 def _normalize_room(room_name: str) -> str:
-    return " ".join(room_name.strip().lower().split())
+    return " ".join(room_name.strip().upper().split())
+
+
+def _migrate_room_names_to_upper(conn: sqlite3.Connection) -> None:
+    """Rewrite legacy lowercase room keys to uppercase."""
+    rows = conn.execute("SELECT room_name FROM rooms").fetchall()
+    for row in rows:
+        old = row["room_name"]
+        new = _normalize_room(old)
+        if old == new:
+            continue
+        clash = conn.execute(
+            "SELECT 1 FROM rooms WHERE room_name = ?", (new,)
+        ).fetchone()
+        if clash:
+            continue
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            "UPDATE rooms SET room_name = ? WHERE room_name = ?",
+            (new, old),
+        )
+        conn.execute(
+            "UPDATE questions SET room_name = ? WHERE room_name = ?",
+            (new, old),
+        )
+        conn.execute(
+            "UPDATE favorites SET room_name = ? WHERE room_name = ?",
+            (new, old),
+        )
+        conn.execute("PRAGMA foreign_keys = ON")
 
 
 def _room_from_row(row: sqlite3.Row) -> dict[str, Any]:

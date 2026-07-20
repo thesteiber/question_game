@@ -434,7 +434,7 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
   display: none;
 }
 
-/* Room name pick buttons — larger / bolder than meta underneath */
+/* Room name pick buttons — larger / bolder, sage-colored */
 div[data-testid="element-container"]:has(.qg-room-pick-mark)
   + div[data-testid="element-container"]
   button {
@@ -443,6 +443,9 @@ div[data-testid="element-container"]:has(.qg-room-pick-mark)
   font-weight: 800 !important;
   letter-spacing: -0.02em !important;
   line-height: 1.2 !important;
+  background: linear-gradient(135deg, #7d9b8a, #9bb5a6) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 0 #5c7a6a !important;
 }
 
 .qg-mode-toggles {
