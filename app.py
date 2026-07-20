@@ -600,20 +600,31 @@ def _render_question_card(
             st.session_state.pop("just_rolled", None)
             st.rerun()
 
-    col_skip, col_fav = st.columns(2)
-    with col_skip:
-        if danger_button("Skip", key=f"skip_{room_name}_{question['number']}", use_container_width=True):
-            db.skip_question(room_name, question["number"])
-            st.session_state.pop("just_rolled", None)
-            st.rerun()
-    with col_fav:
-        if st.button(fav_label, use_container_width=True):
-            db.toggle_favorite(
-                question["text"],
-                room_name=room_name,
-                source_number=question["number"],
-            )
-            st.rerun()
+    if danger_button(
+        "Skip",
+        key=f"skip_{room_name}_{question['number']}",
+        use_container_width=True,
+    ):
+        db.skip_question(room_name, question["number"])
+        st.session_state.pop("just_rolled", None)
+        st.rerun()
+
+    if st.button(
+        "Go back",
+        key=f"back_{room_name}_{question['number']}",
+        use_container_width=True,
+    ):
+        db.set_current_question(room_name, None)
+        st.session_state.pop("just_rolled", None)
+        st.rerun()
+
+    if st.button(fav_label, use_container_width=True):
+        db.toggle_favorite(
+            question["text"],
+            room_name=room_name,
+            source_number=question["number"],
+        )
+        st.rerun()
 
 
 def render_play(db: GameDB, room_name: str, room: dict) -> None:
