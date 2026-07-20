@@ -199,8 +199,13 @@ def render_room_gate() -> None:
                         st.rerun()
 
             else:
+                st.markdown(
+                    f'<p class="qg-room-title">{html.escape(name)}</p>'
+                    f'<p class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</p>',
+                    unsafe_allow_html=True,
+                )
                 if st.button(
-                    name,
+                    "Open",
                     key=f"room_pick_{name}",
                     use_container_width=True,
                 ):
@@ -208,10 +213,6 @@ def render_room_gate() -> None:
                     st.session_state.pop("landing_confirm_del", None)
                     st.session_state.pop("creating_room", None)
                     st.rerun()
-                st.markdown(
-                    f'<p class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</p>',
-                    unsafe_allow_html=True,
-                )
 
             st.markdown("</div>", unsafe_allow_html=True)
             st.markdown('<div style="height:0.5rem"></div>', unsafe_allow_html=True)

@@ -163,21 +163,23 @@ h1 {
 
 .qg-room-title {
   font-family: 'Fraunces', Georgia, serif;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.45rem;
+  font-weight: 800;
   color: #2c3a34;
   text-align: center;
-  margin: 0 0 0.2rem 0;
+  margin: 0 0 0.15rem 0;
   letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .qg-room-meta {
-  color: #7a847c;
-  font-size: 0.78rem;
-  font-weight: 600;
+  color: #8a938c !important;
+  font-size: 0.7rem !important;
+  font-weight: 400 !important;
   text-align: center;
-  margin: 0.15rem 0 0.55rem 0;
-  line-height: 1.3;
+  margin: 0.1rem 0 0.55rem 0;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
 }
 
 .qg-room-row {
@@ -425,23 +427,7 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
 }
 
 .qg-room-block {
-  margin-bottom: 0.85rem;
-  text-align: center;
-}
-
-/* Streamlit markdown wrappers don't nest widgets; target the following room button */
-.qg-room-block + div.stButton > button {
-  font-family: 'Fraunces', Georgia, serif !important;
-  font-size: 1.2rem !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.02em;
-  min-height: 2.85rem !important;
-}
-
-.qg-room-block + div.stButton + div .qg-room-meta,
-div[data-testid="stMarkdownContainer"] .qg-room-meta {
-  margin-top: 0.35rem;
-  margin-bottom: 0;
+  display: none;
 }
 
 .qg-mode-toggles {
