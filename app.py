@@ -225,21 +225,11 @@ def render_room_gate() -> None:
             st.markdown("</div>", unsafe_allow_html=True)
             st.markdown('<div style="height:0.5rem"></div>', unsafe_allow_html=True)
 
-    favorites = db.list_favorites()
-    if favorites:
-        st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
-        with st.expander(f"Favorites ({len(favorites)})"):
-            for fav in favorites:
-                st.markdown(f"• {html.escape(fav['question_text'])}")
-                if danger_button("Remove", key=f"unfav_{fav['id']}"):
-                    db.remove_favorite(fav["id"])
-                    st.rerun()
-
     archived_rooms = db.list_archived_rooms()
     if archived_rooms:
         st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
         confirm_arch_del = st.session_state.get("landing_confirm_arch_del")
-        with st.expander(f"Archived ({len(archived_rooms)})"):
+        with st.expander(f"Archived Rooms ({len(archived_rooms)})"):
             for room in archived_rooms:
                 name = room["room_name"]
                 players = ", ".join(room["players"]) if room["players"] else "—"
@@ -297,6 +287,16 @@ def render_room_gate() -> None:
                         st.session_state["landing_confirm_arch_del"] = name
                         st.rerun()
                 st.markdown('<div style="height:0.65rem"></div>', unsafe_allow_html=True)
+
+    favorites = db.list_favorites()
+    if favorites:
+        st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
+        with st.expander(f"Favorite Questions ({len(favorites)})"):
+            for fav in favorites:
+                st.markdown(f"• {html.escape(fav['question_text'])}")
+                if danger_button("Remove", key=f"unfav_{fav['id']}"):
+                    db.remove_favorite(fav["id"])
+                    st.rerun()
 
 
 def render_setup(db: GameDB, room_name: str, room: dict) -> None:
