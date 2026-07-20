@@ -122,36 +122,34 @@ def render_room_gate() -> None:
     rooms = db.list_rooms()
     if rooms:
         st.markdown('<div class="qg-landing-divider"></div>', unsafe_allow_html=True)
-        _, rooms_col, _ = st.columns([0.08, 0.84, 0.08])
-        with rooms_col:
-            for room in rooms:
-                name = room["room_name"]
-                players = ", ".join(room["players"]) if room["players"] else "—"
-                if room["total"]:
-                    progress = f"{room['remaining']} left"
+        for room in rooms:
+            name = room["room_name"]
+            players = ", ".join(room["players"]) if room["players"] else "—"
+            if room["total"]:
+                progress = f"{room['remaining']} left"
+            else:
+                progress = "setup"
+            st.markdown(
+                f'<div class="qg-room-card"><strong>{html.escape(name)}</strong>'
+                f'<div class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</div></div>',
+                unsafe_allow_html=True,
+            )
+            join_col, delete_col = st.columns(2, gap="small")
+            with join_col:
+                if st.button("Join", key=f"join_{name}", use_container_width=True, type="primary"):
+                    enter_room(name)
+            with delete_col:
+                confirm_key = f"confirm_del_{name}"
+                if st.session_state.get(confirm_key):
+                    if st.button("Confirm", key=f"del_yes_{name}", use_container_width=True):
+                        db.delete_room(name)
+                        st.session_state.pop(confirm_key, None)
+                        st.rerun()
                 else:
-                    progress = "setup"
-                st.markdown(
-                    f'<div class="qg-room-card"><strong>{html.escape(name)}</strong>'
-                    f'<div class="qg-room-meta">{html.escape(players)} · {html.escape(progress)}</div></div>',
-                    unsafe_allow_html=True,
-                )
-                join_col, delete_col = st.columns(2, gap="small")
-                with join_col:
-                    if st.button("Join", key=f"join_{name}", use_container_width=True, type="primary"):
-                        enter_room(name)
-                with delete_col:
-                    confirm_key = f"confirm_del_{name}"
-                    if st.session_state.get(confirm_key):
-                        if st.button("Confirm", key=f"del_yes_{name}", use_container_width=True):
-                            db.delete_room(name)
-                            st.session_state.pop(confirm_key, None)
-                            st.rerun()
-                    else:
-                        if st.button("Delete", key=f"del_{name}", use_container_width=True):
-                            st.session_state[confirm_key] = True
-                            st.rerun()
-                st.markdown('<div style="height:0.65rem"></div>', unsafe_allow_html=True)
+                    if st.button("Delete", key=f"del_{name}", use_container_width=True):
+                        st.session_state[confirm_key] = True
+                        st.rerun()
+            st.markdown('<div style="height:0.65rem"></div>', unsafe_allow_html=True)
 
     favorites = db.list_favorites()
     if favorites:
@@ -187,15 +185,22 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
 
     if players:
         for i, name in enumerate(players):
-            # Single control keeps name + trash on one row without breaking mobile width.
-            if st.button(
-                f"{name}  🗑",
-                key=f"setup_rm_{room_name}_{i}_{name}",
-                use_container_width=True,
-            ):
-                players.pop(i)
-                st.session_state[players_key] = players
-                st.rerun()
+            st.markdown('<div class="qg-player-block">', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="qg-player-row">{html.escape(name)}</div>',
+                unsafe_allow_html=True,
+            )
+            _, rm_mid, _ = st.columns([1, 2, 1])
+            with rm_mid:
+                if st.button(
+                    "Remove",
+                    key=f"setup_rm_{room_name}_{i}_{name}",
+                    use_container_width=True,
+                ):
+                    players.pop(i)
+                    st.session_state[players_key] = players
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.get(add_mode_key):
         st.markdown('<p class="qg-options-title">New player</p>', unsafe_allow_html=True)
