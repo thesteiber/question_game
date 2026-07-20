@@ -231,7 +231,7 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
                         st.rerun()
 
             elif selected == i:
-                edit_c, remove_c = st.columns(2)
+                edit_c, remove_c = st.columns(2, gap="small")
                 with edit_c:
                     if st.button(
                         "Edit",
@@ -248,6 +248,16 @@ def render_setup(db: GameDB, room_name: str, room: dict) -> None:
                     ):
                         players.pop(i)
                         st.session_state[players_key] = players
+                        st.session_state[selected_key] = None
+                        st.session_state[rename_key] = None
+                        st.rerun()
+                _, cancel_mid, _ = st.columns([1, 2, 1])
+                with cancel_mid:
+                    if st.button(
+                        "Cancel",
+                        use_container_width=True,
+                        key=f"setup_select_cancel_{room_name}_{i}",
+                    ):
                         st.session_state[selected_key] = None
                         st.session_state[rename_key] = None
                         st.rerun()
