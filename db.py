@@ -230,6 +230,7 @@ class GameDB:
         settings = dict(room["settings"])
         settings["current_player_index"] = 0
         settings["current_question_number"] = None
+        settings["question_history"] = []
         settings["phase"] = "play"
         self.save_room(key, settings=settings)
 
@@ -444,6 +445,12 @@ class GameDB:
             )
         room = self.ensure_room(key)
         settings = dict(room["settings"])
+        _push_question_history(
+            settings,
+            number,
+            advanced_turn=True,
+            dice=settings.get("last_dice"),
+        )
         players = room["players"]
         if players:
             settings["current_player_index"] = (int(settings.get("current_player_index", 0)) + 1) % len(
@@ -468,10 +475,60 @@ class GameDB:
             )
         room = self.ensure_room(key)
         settings = dict(room["settings"])
+        _push_question_history(
+            settings,
+            number,
+            advanced_turn=False,
+            dice=settings.get("last_dice"),
+        )
         settings["current_question_number"] = None
         if not self.remaining_questions(key):
             settings["phase"] = "done"
         self.save_room(key, settings=settings)
+
+    def go_back_question(self, room_name: str) -> bool:
+        """Restore the previous question; put the current roll back in the bank.
+
+        Returns False if there is no previous question to restore.
+        """
+        room = self.ensure_room(room_name)
+        settings = dict(room["settings"])
+        history = list(settings.get("question_history") or [])
+        if not history:
+            return False
+
+        prev = history.pop()
+        settings["question_history"] = history
+
+        key = _normalize_room(room_name)
+        prev_number = int(prev["number"])
+
+        with self._connect() as conn:
+            # Current roll stays unanswered and returns to the remaining pool.
+            conn.execute(
+                """
+                UPDATE questions
+                SET answered = 0, answered_by = NULL
+                WHERE room_name = ? AND number = ?
+                """,
+                (key, prev_number),
+            )
+
+        settings["current_question_number"] = prev_number
+        settings["phase"] = "play"
+        if prev.get("dice"):
+            settings["last_dice"] = prev["dice"]
+        else:
+            settings.pop("last_dice", None)
+
+        if prev.get("advanced_turn"):
+            players = room["players"] or []
+            if players:
+                idx = int(settings.get("current_player_index", 0))
+                settings["current_player_index"] = (idx - 1) % len(players)
+
+        self.save_room(room_name, settings=settings)
+        return True
 
     def add_favorite(
         self,
@@ -579,6 +636,7 @@ class GameDB:
         settings = dict(room["settings"])
         settings["current_player_index"] = 0
         settings["current_question_number"] = None
+        settings["question_history"] = []
         settings["phase"] = "play" if self.question_count(key) else "setup"
         return self.save_room(key, settings=settings)
 
@@ -590,12 +648,31 @@ class GameDB:
         settings = dict(room["settings"])
         settings["current_player_index"] = 0
         settings["current_question_number"] = None
+        settings["question_history"] = []
         settings["phase"] = "setup"
         return self.save_room(key, settings=settings)
 
 
 def _normalize_room(room_name: str) -> str:
     return " ".join(room_name.strip().upper().split())
+
+
+def _push_question_history(
+    settings: dict[str, Any],
+    number: int,
+    *,
+    advanced_turn: bool,
+    dice: dict[str, Any] | None,
+) -> None:
+    history = list(settings.get("question_history") or [])
+    history.append(
+        {
+            "number": int(number),
+            "advanced_turn": bool(advanced_turn),
+            "dice": dice,
+        }
+    )
+    settings["question_history"] = history[-80:]
 
 
 def _migrate_room_names_to_upper(conn: sqlite3.Connection) -> None:

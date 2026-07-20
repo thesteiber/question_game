@@ -703,14 +703,16 @@ def _render_question_card(
         st.session_state.pop("just_rolled", None)
         st.rerun()
 
+    can_go_back = bool((room.get("settings") or {}).get("question_history"))
     if st.button(
         "Go back",
         key=f"back_{room_name}_{question['number']}",
         use_container_width=True,
+        disabled=not can_go_back,
     ):
-        db.set_current_question(room_name, None)
-        st.session_state.pop("just_rolled", None)
-        st.rerun()
+        if db.go_back_question(room_name):
+            st.session_state.pop("just_rolled", None)
+            st.rerun()
 
 
 def render_play(db: GameDB, room_name: str, room: dict) -> None:
