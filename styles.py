@@ -29,7 +29,7 @@ div[data-testid="stToolbar"] { display: none; }
 div[data-testid="stDecoration"] { display: none; }
 section[data-testid="stSidebar"] { display: none; }
 
-h1, .qg-brand {
+.qg-brand {
   font-family: 'Fraunces', Georgia, serif !important;
   font-size: 2.15rem !important;
   font-weight: 700 !important;
@@ -37,26 +37,33 @@ h1, .qg-brand {
   color: #1a2e2a !important;
   margin-bottom: 0.15rem !important;
   line-height: 1.15 !important;
+  text-align: center;
+}
+
+h1 {
+  font-family: 'Fraunces', Georgia, serif !important;
+  font-size: 2.15rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em;
+  color: #1a2e2a !important;
+  margin-bottom: 0.15rem !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
 }
 
 .qg-subtitle {
   color: #c45c26;
   font-size: 1.05rem;
   font-weight: 700;
-  margin: 0 0 0.15rem 0;
-}
-
-.qg-hint {
-  color: #6b6258;
-  font-size: 0.88rem;
-  font-style: italic;
-  margin: 0 0 1.25rem 0;
+  margin: 0 0 1.1rem 0;
+  text-align: center;
 }
 
 .qg-meta {
   color: #6b6258;
   font-size: 0.92rem;
   margin-bottom: 0.85rem;
+  text-align: center;
 }
 
 .qg-chip-row {
@@ -64,6 +71,7 @@ h1, .qg-brand {
   flex-wrap: wrap;
   gap: 0.4rem;
   margin: 0.4rem 0 0.9rem 0;
+  justify-content: center;
 }
 
 .qg-chip {
@@ -221,31 +229,19 @@ h1, .qg-brand {
   animation: qg-pop 0.4s ease-out 1.2s both;
 }
 
-.qg-dice-flavor {
-  text-align: center;
-  color: #6b6258;
-  font-size: 0.82rem;
-  font-style: italic;
-  margin: 0 0 0.75rem 0;
-  animation: qg-pop 0.4s ease-out 1.35s both;
-}
-
 .qg-roll-prompt {
   text-align: center;
-  padding: 0.5rem 0 0.25rem;
+  padding: 0.25rem 0 0;
 }
 
-.qg-roll-prompt h2 {
-  font-family: 'Fraunces', Georgia, serif !important;
-  font-size: 1.45rem !important;
-  color: #1a2e2a !important;
-  margin: 0.4rem 0 0.35rem !important;
-}
-
-.qg-roll-prompt p {
-  color: #6b6258;
-  margin: 0 0 0.75rem 0;
-  font-size: 0.95rem;
+div.stButton > button,
+div.stFormSubmitButton > button {
+  width: 100%;
+  min-height: 3.15rem;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  border-radius: 14px !important;
+  border: none !important;
 }
 
 .qg-idle-dice {
@@ -294,15 +290,6 @@ h1, .qg-brand {
 }
 
 /* Buttons — big phone-friendly taps */
-div.stButton > button {
-  width: 100%;
-  min-height: 3.15rem;
-  font-size: 1.05rem !important;
-  font-weight: 800 !important;
-  border-radius: 14px !important;
-  border: none !important;
-}
-
 div.stButton > button[kind="primary"],
 div.stButton > button[data-testid="baseButton-primary"] {
   background: linear-gradient(135deg, #c45c26, #d9783a) !important;

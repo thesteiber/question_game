@@ -39,15 +39,6 @@ def roll_until_valid(remaining_numbers: set[int], *, max_attempts: int = 200) ->
 
 def render_dice_roll(result: DiceResult) -> None:
     """Show tumbling 0–5 dice that land on the chosen question number."""
-    flavor = ""
-    if result.attempts > 1:
-        label = (
-            f"took {result.attempts} rolls to find an open number"
-            if result.attempts <= 8
-            else f"whew — {result.attempts} rolls!"
-        )
-        flavor = f'<p class="flavor">{label}</p>'
-
     components.html(
         f"""
 <!DOCTYPE html>
@@ -93,18 +84,9 @@ def render_dice_roll(result: DiceResult) -> None:
     font-size: 1.2rem;
     font-weight: 800;
     color: #1a2e2a;
-    margin: 0.55rem 0 0.1rem;
+    margin: 0.55rem 0 0;
     opacity: 0;
     animation: pop 0.35s ease-out 1.35s forwards;
-  }}
-  .flavor {{
-    text-align: center;
-    color: #6b6258;
-    font-size: 0.82rem;
-    font-style: italic;
-    margin: 0;
-    opacity: 0;
-    animation: pop 0.35s ease-out 1.5s forwards;
   }}
   @keyframes tumble {{
     0%   {{ transform: translateY(-30px) rotate(-20deg) scale(0.85); }}
@@ -126,7 +108,6 @@ def render_dice_roll(result: DiceResult) -> None:
     <div class="die"><span class="face" id="d1">?</span></div>
   </div>
   <p class="result">Question <strong>{result.tens}{result.ones:d}</strong></p>
-  {flavor}
 <script>
   const finals = [{result.tens}, {result.ones}];
   const faces = [document.getElementById('d0'), document.getElementById('d1')];
@@ -149,7 +130,7 @@ def render_dice_roll(result: DiceResult) -> None:
 </body>
 </html>
         """,
-        height=190,
+        height=170,
         scrolling=False,
     )
 
