@@ -430,24 +430,6 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
   display: none;
 }
 
-.qg-room-pick-mark {
-  display: none;
-}
-
-/* Room name pick buttons — larger / bolder, sage-colored */
-div[data-testid="element-container"]:has(.qg-room-pick-mark)
-  + div[data-testid="element-container"]
-  button {
-  font-family: 'Fraunces', Georgia, serif !important;
-  font-size: 1.35rem !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.2 !important;
-  background: linear-gradient(135deg, #7d9b8a, #9bb5a6) !important;
-  color: #fff !important;
-  box-shadow: 0 6px 0 #5c7a6a !important;
-}
-
 .qg-mode-toggles {
   margin: 0.35rem 0 0.85rem 0;
   padding-left: 1.15rem;

@@ -199,11 +199,11 @@ def render_room_gate() -> None:
                         st.rerun()
 
             else:
-                st.markdown('<div class="qg-room-pick-mark"></div>', unsafe_allow_html=True)
                 if st.button(
                     name,
                     key=f"room_pick_{name}",
                     use_container_width=True,
+                    type="primary",
                 ):
                     st.session_state["landing_selected_room"] = name
                     st.session_state.pop("landing_confirm_del", None)
