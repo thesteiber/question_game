@@ -131,8 +131,8 @@ div[data-testid="element-container"]:has(.qg-fav-mark)
   + div[data-testid="element-container"],
 div[data-testid="stElementContainer"]:has(.qg-fav-mark)
   + div[data-testid="stElementContainer"] {
-  margin-top: -1.05rem !important;
-  margin-bottom: -1.05rem !important;
+  margin-top: -0.35rem !important;
+  margin-bottom: -0.2rem !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
@@ -143,11 +143,11 @@ div[data-testid="element-container"]:has(.qg-fav-mark)
 div[data-testid="stElementContainer"]:has(.qg-fav-mark)
   + div[data-testid="stElementContainer"]
   button {
-  min-height: 1.2rem !important;
-  height: 1.2rem !important;
+  min-height: 1.35rem !important;
+  height: 1.35rem !important;
   padding: 0 !important;
   margin: 0 !important;
-  font-size: 1.05rem !important;
+  font-size: 1.1rem !important;
   font-weight: 500 !important;
   line-height: 1 !important;
   background: transparent !important;
@@ -165,15 +165,15 @@ div[data-testid="stElementContainer"]:has(.qg-fav-mark.qg-fav-on)
   color: #c4a4a8 !important;
 }
 
-/* Pull number / question toward the star */
+/* Mild pull — enough to feel tight, not enough to overlap */
 div[data-testid="element-container"]:has(.qg-number),
 div[data-testid="stElementContainer"]:has(.qg-number) {
-  margin-bottom: -0.95rem !important;
+  margin-bottom: -0.4rem !important;
 }
 
 div[data-testid="element-container"]:has(.qg-question),
 div[data-testid="stElementContainer"]:has(.qg-question) {
-  margin-top: -0.95rem !important;
+  margin-top: -0.15rem !important;
 }
 
 .qg-question {
@@ -182,7 +182,7 @@ div[data-testid="stElementContainer"]:has(.qg-question) {
   line-height: 1.3;
   font-weight: 600;
   color: #2c3a34;
-  margin: 0 0 1rem 0;
+  margin: 0.35rem 0 1rem 0;
   text-align: center;
   padding: 1rem 0.85rem;
   background: rgba(255,255,255,0.72);
