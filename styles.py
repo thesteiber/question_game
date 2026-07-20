@@ -177,7 +177,7 @@ h1 {
   font-size: 0.7rem !important;
   font-weight: 400 !important;
   text-align: center;
-  margin: 0.1rem 0 0.55rem 0;
+  margin: 0.35rem 0 0.15rem 0;
   line-height: 1.35;
   letter-spacing: 0.01em;
 }
@@ -428,6 +428,21 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
 
 .qg-room-block {
   display: none;
+}
+
+.qg-room-pick-mark {
+  display: none;
+}
+
+/* Room name pick buttons — larger / bolder than meta underneath */
+div[data-testid="element-container"]:has(.qg-room-pick-mark)
+  + div[data-testid="element-container"]
+  button {
+  font-family: 'Fraunces', Georgia, serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.2 !important;
 }
 
 .qg-mode-toggles {
