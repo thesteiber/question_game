@@ -717,7 +717,12 @@ def _render_options_panel(db: GameDB, room_name: str, player_names: list[str]) -
 
     row1_a, row1_b = st.columns(2)
     with row1_a:
-        if st.button("Add player", use_container_width=True, key=f"opt_add_{room_name}"):
+        if st.button(
+            "Add player",
+            type="primary",
+            use_container_width=True,
+            key=f"opt_add_{room_name}",
+        ):
             st.session_state[mode_key] = "add"
             st.rerun()
     with row1_b:
@@ -731,13 +736,13 @@ def _render_options_panel(db: GameDB, room_name: str, player_names: list[str]) -
 
     row2_a, row2_b = st.columns(2)
     with row2_a:
-        if st.button("New bank", use_container_width=True, key=f"opt_bank_{room_name}"):
+        if st.button("New questions", use_container_width=True, key=f"opt_bank_{room_name}"):
             db.clear_questions(room_name)
             st.session_state.pop("just_rolled", None)
             st.session_state.pop(mode_key, None)
             st.rerun()
     with row2_b:
-        if danger_button("Reset", use_container_width=True, key=f"opt_reset_{room_name}"):
+        if danger_button("Restart", use_container_width=True, key=f"opt_reset_{room_name}"):
             db.reset_progress(room_name)
             st.session_state.pop("just_rolled", None)
             st.session_state.pop(mode_key, None)
