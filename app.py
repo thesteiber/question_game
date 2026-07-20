@@ -139,7 +139,7 @@ def render_room_gate() -> None:
             else:
                 progress = "setup"
 
-            st.markdown('<div class="qg-player-block">', unsafe_allow_html=True)
+            st.markdown('<div class="qg-room-block">', unsafe_allow_html=True)
 
             if confirm_del == name:
                 st.markdown(

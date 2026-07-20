@@ -424,7 +424,13 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
   margin-bottom: 0.85rem;
 }
 
-.qg-player-block > div.stButton:first-of-type > button {
+.qg-room-block {
+  margin-bottom: 0.85rem;
+  text-align: center;
+}
+
+/* Streamlit markdown wrappers don't nest widgets; target the following room button */
+.qg-room-block + div.stButton > button {
   font-family: 'Fraunces', Georgia, serif !important;
   font-size: 1.2rem !important;
   font-weight: 700 !important;
@@ -432,7 +438,8 @@ div[data-testid="stForm"] div.stFormSubmitButton > button {
   min-height: 2.85rem !important;
 }
 
-.qg-player-block .qg-room-meta {
+.qg-room-block + div.stButton + div .qg-room-meta,
+div[data-testid="stMarkdownContainer"] .qg-room-meta {
   margin-top: 0.35rem;
   margin-bottom: 0;
 }
